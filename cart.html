@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keranjang — Klikva</title>
+<link rel="icon" type="image/png" href="logo-klikva.png">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#FAF9F6;--bg-card:#fff;--text:#1A1A1A;--text-secondary:#555;--text-light:#999;--border:#E8E6E1;--shadow-hover:0 12px 40px rgba(0,0,0,.08);--radius:20px;--font:'Space Grotesk',sans-serif;--nav-bg:rgba(255,255,255,.88);--danger:#DC2626;--warning:#D97706;--success:#059669}
+[data-theme="dark"]{--bg:#121212;--bg-card:#1E1E1E;--text:#EDEDED;--text-secondary:#AAA;--text-light:#777;--border:#2A2A2A;--shadow-hover:0 12px 40px rgba(0,0,0,.3);--nav-bg:rgba(18,18,18,.92)}
+body{font-family:var(--font);background:var(--bg);color:var(--text);transition:background .3s,color .3s;overflow-x:hidden}
+a{text-decoration:none;color:inherit}button{font-family:var(--font);cursor:pointer;border:none;background:none;color:inherit}ul{list-style:none}
+
+/* NAVBAR */
+#navbar{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 24px;background:var(--nav-bg);backdrop-filter:blur(20px);box-shadow:0 1px 0 var(--border)}
+.nav-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:68px}
+.nav-logo{display:flex;align-items:center;gap:8px;font-size:1.25rem;font-weight:800;letter-spacing:-.04em}
+.nav-logo-img{width:26px;height:26px;object-fit:contain}
+.nav-actions{display:flex;align-items:center;gap:12px}
+.lang-switcher{display:flex;gap:4px}
+.lang-btn{border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:.7rem;font-weight:500;color:var(--text-secondary);background:transparent}
+.lang-btn.active{background:var(--text);border-color:var(--text);color:var(--bg)}
+.avatar-nav{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px 4px 4px;border-radius:50px;transition:background .2s}
+.avatar-nav:hover{background:var(--bg)}
+.avatar-nav-image{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;background:var(--bg);overflow:hidden;font-weight:700;color:var(--text)}
+.avatar-nav-image img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar-nav-name{font-size:.8rem;font-weight:500;max-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cart-link{position:relative;padding:8px;font-size:1.4rem;transition:transform .2s}
+.cart-link:hover{transform:scale(1.1)}
+.cart-badge{position:absolute;top:0;right:0;background:#ef4444;color:#fff;font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:50%;min-width:18px;text-align:center}
+.btn-ghost{font-size:.875rem;font-weight:500;padding:9px 18px;border-radius:50px;border:1.5px solid var(--border);transition:border-color .2s,background .2s;color:var(--text)}
+.btn-ghost:hover{border-color:var(--text)}
+.btn-solid{font-size:.875rem;font-weight:600;color:var(--bg);padding:9px 20px;border-radius:50px;background:var(--text);transition:opacity .2s,transform .2s}
+.btn-solid:hover{opacity:.8;transform:scale(1.03)}
+
+/* CONTAINER */
+.cart-container{max-width:1400px;margin:0 auto;padding:100px 24px 40px}
+.cart-header{margin-bottom:2rem}
+.cart-header h1{font-size:clamp(1.8rem,3vw,2.4rem);font-weight:800;letter-spacing:-.02em}
+.cart-header p{color:var(--text-secondary);margin-top:.5rem;font-size:.9rem}
+
+/* GRID */
+.cart-grid{display:grid;grid-template-columns:1fr 380px;gap:2rem}
+
+/* CART ITEMS */
+.cart-items{background:var(--bg-card);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.cart-item{display:grid;grid-template-columns:100px 1fr auto;gap:1rem;padding:1.5rem;border-bottom:1px solid var(--border);align-items:center;transition:background .2s}
+.cart-item:last-child{border-bottom:none}
+.cart-item.out-of-stock{background:rgba(220,38,38,.04)}
+[data-theme="dark"] .cart-item.out-of-stock{background:rgba(220,38,38,.08)}
+.cart-item.removed-product{opacity:.6;background:rgba(107,114,128,.05)}
+
+.cart-item-image{width:80px;height:80px;background:var(--bg);border-radius:1rem;display:flex;align-items:center;justify-content:center;font-size:2.5rem;position:relative;overflow:hidden}
+.cart-item-image img{width:100%;height:100%;object-fit:contain}
+
+.stock-badge{position:absolute;top:-6px;right:-6px;background:var(--danger);color:white;font-size:.6rem;font-weight:700;padding:.2rem .4rem;border-radius:.4rem;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
+.stock-badge.low{background:var(--warning)}
+.stock-badge.removed{background:#6B7280}
+
+.cart-item-info h3{font-size:1rem;font-weight:700;margin-bottom:.25rem}
+.cart-item-category{font-size:.7rem;color:var(--text-light);text-transform:uppercase;margin-bottom:.5rem;letter-spacing:.06em}
+.cart-item-price{font-weight:800;font-size:1rem}
+
+.stock-warning-text{font-size:.75rem;margin-top:.35rem;font-weight:600}
+.stock-warning-text.out{color:var(--danger)}
+.stock-warning-text.low{color:var(--warning)}
+.stock-warning-text.ok{color:var(--success)}
+.stock-warning-text.removed{color:var(--text-light)}
+
+.cart-item-actions{display:flex;align-items:center;gap:1rem}
+.quantity-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-size:1rem;transition:all .2s}
+.quantity-btn:hover:not(:disabled){background:var(--text);color:var(--bg);border-color:var(--text)}
+.quantity-btn:disabled{opacity:.35;cursor:not-allowed}
+.item-quantity{font-weight:600;min-width:30px;text-align:center}
+.remove-btn{background:none;border:none;color:var(--danger);cursor:pointer;font-size:.8rem;padding:.25rem .5rem;border-radius:.5rem;transition:all .2s}
+.remove-btn:hover{background:rgba(220,38,38,.1)}
+
+.stock-alert-banner{display:flex;align-items:flex-start;gap:.75rem;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);border-radius:.875rem;padding:.875rem 1rem;margin-bottom:1rem;font-size:.8rem;color:var(--danger);line-height:1.5}
+.stock-low-banner{display:flex;align-items:flex-start;gap:.75rem;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.25);border-radius:.875rem;padding:.875rem 1rem;margin-bottom:1rem;font-size:.8rem;color:var(--warning);line-height:1.5}
+.stock-alert-banner .alert-icon,.stock-low-banner .alert-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+.stock-alert-banner strong,.stock-low-banner strong{display:block;font-weight:700;margin-bottom:.2rem}
+
+.cart-summary{background:var(--bg-card);border-radius:var(--radius);padding:1.5rem;border:1px solid var(--border);position:sticky;top:100px}
+.cart-summary h3{font-size:1.25rem;font-weight:700;margin-bottom:1.5rem}
+.summary-row{display:flex;justify-content:space-between;margin-bottom:1rem;font-size:.875rem}
+.summary-row.total{font-weight:800;font-size:1.1rem;border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem}
+
+.checkout-btn{width:100%;background:var(--text);color:var(--bg);border:none;padding:1rem;border-radius:2rem;font-weight:700;font-size:1rem;cursor:pointer;transition:all .2s;margin-top:1rem}
+.checkout-btn:hover:not(:disabled){opacity:.85;transform:scale(1.02)}
+.checkout-btn:disabled{background:#9CA3AF;cursor:not-allowed;transform:none;opacity:1;color:#fff}
+
+.checkout-hint{font-size:.75rem;color:var(--danger);text-align:center;margin-top:.5rem;font-weight:500;min-height:1.1rem}
+.continue-shop{display:block;text-align:center;margin-top:.75rem;color:var(--text-light);text-decoration:none;font-size:.875rem;transition:color .2s}
+.continue-shop:hover{color:var(--text)}
+
+.empty-cart{text-align:center;padding:4rem;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border)}
+.empty-cart .icon{font-size:4rem;margin-bottom:1rem}
+.empty-cart h3{font-size:1.5rem;margin-bottom:.5rem}
+.empty-cart p{color:var(--text-secondary);margin-bottom:1.5rem}
+.shop-now-btn{background:var(--text);color:var(--bg);padding:.75rem 2rem;border-radius:2rem;text-decoration:none;font-weight:600;display:inline-block;transition:opacity .2s}
+.shop-now-btn:hover{opacity:.85}
+
+.loading-state{text-align:center;padding:4rem;color:var(--text-light)}
+.loading-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* FOOTER */
+footer{background:var(--bg-card);padding:3rem 2rem 2rem;border-top:1px solid var(--border);margin-top:2rem}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:2rem;max-width:1400px;margin:0 auto}
+.footer-col h4{margin-bottom:1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-secondary)}
+.footer-col a{display:block;color:var(--text-light);text-decoration:none;margin-bottom:.5rem;font-size:.85rem;transition:color .2s}
+.footer-col a:hover{color:var(--text)}
+.footer-col p{color:var(--text-secondary);font-size:.85rem;line-height:1.6;max-width:320px}
+.footer-bottom{text-align:center;padding-top:2rem;margin-top:2rem;border-top:1px solid var(--border);color:var(--text-light);font-size:.75rem;max-width:1400px;margin-left:auto;margin-right:auto}
+
+@media(max-width:900px){.cart-grid{grid-template-columns:1fr}.cart-item{grid-template-columns:1fr;text-align:center;gap:1rem}.cart-item-actions{justify-content:center}.footer-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.cart-container{padding:80px 16px 40px}.footer-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo"><img src="logo-klikva.png" alt="Klikva" class="nav-logo-img">Klikva</a>
+    <div class="nav-actions">
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="id">ID</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+      </div>
+      <div id="navAvatarContainer"></div>
+      <a href="shop.html" class="btn-ghost" id="navShop">Belanja</a>
+      <a href="cart.html" class="cart-link">🛒<span class="cart-badge" id="cartCount">0</span></a>
+      <a href="registerd.html" class="btn-solid" id="loginBtn">Masuk</a>
+    </div>
+  </div>
+</nav>
+
+<main class="cart-container" id="cartContainer">
+  <div class="loading-state">
+    <div class="loading-spinner"></div>
+    <p style="margin-top:12px">Memuat keranjang...</p>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-col">
+      <a href="index.html" class="nav-logo" style="font-size:1.1rem;display:inline-flex;margin-bottom:10px"><img src="logo-klikva.png" alt="Klikva" class="nav-logo-img">Klikva</a>
+      <p data-i18n="footer_desc">Reptil premium dengan genetika eksklusif, dirawat dengan penuh perhatian.</p>
+    </div>
+    <div class="footer-col">
+      <h4 data-i18n="footer_shop">Belanja</h4>
+      <a href="shop.html" data-i18n="footer_all">Semua Produk</a>
+      <a href="index.html#collection" data-i18n="footer_collection">Koleksi</a>
+      <a href="index.html#bestsellers" data-i18n="footer_best">Best Seller</a>
+    </div>
+    <div class="footer-col">
+      <h4 data-i18n="footer_help">Bantuan</h4>
+      <a href="mailto:support@klikva.com" data-i18n="footer_email">Email</a>
+      <a href="#" data-i18n="footer_shipping">Pengiriman</a>
+      <a href="#" data-i18n="footer_guarantee">Garansi</a>
+    </div>
+    <div class="footer-col">
+      <h4 data-i18n="footer_account">Akun</h4>
+      <a href="registerd.html" data-i18n="footer_login">Masuk</a>
+      <a href="dashboard.html" data-i18n="footer_dashboard">Dashboard</a>
+      <a href="cart.html" data-i18n="footer_cart">Keranjang</a>
+    </div>
+  </div>
+  <div class="footer-bottom" data-i18n="footer_copyright">© 2025 Klikva. Dibuat dengan semangat, dirawat dengan penuh perhatian.</div>
+</footer>
+
+<script>
+/* =================================================================
+   KONFIGURASI
+================================================================= */
+const API_URL = 'https://script.google.com/macros/s/AKfycbzq6dz2VYtO1iWu_U6H02jZSWQBZ3Lvu9EKra8Z2QUMy7UtOG_UVM2WeUeT1nne1Kz_/exec';
+
+/* =================================================================
+   TRANSLATIONS
+================================================================= */
+const translations = {
+  id: {
+    page_title: 'Keranjang — Klikva',
+    cart_title: 'Keranjang Belanja',
+    cart_items: 'item di keranjang',
+    order_summary: 'Ringkasan Pesanan',
+    subtotal: 'Subtotal',
+    shipping: 'Pengiriman',
+    free: 'GRATIS',
+    total: 'Total',
+    checkout: 'Checkout →',
+    checkout_blocked: '🚫 Stok Tidak Tersedia',
+    checkout_hint_blocked: 'Hapus produk stok habis untuk melanjutkan',
+    continue_shopping: '← Lanjut Belanja',
+    empty_title: 'Keranjang kamu kosong',
+    empty_desc: 'Belum ada item di keranjang. Yuk mulai belanja!',
+    empty_btn: 'Mulai Belanja →',
+    stock_out: 'Stok Habis',
+    stock_left: 'Sisa',
+    stock_available: '✓ Stok tersedia',
+    stock_almost: 'Hampir habis! Sisa',
+    stock_not_enough: 'Stok tidak cukup (tersisa',
+    stock_out_banner_title: 'Beberapa produk stok habis!',
+    stock_out_banner_desc: 'Hapus produk tersebut agar bisa lanjut checkout.',
+    stock_low_banner_title: 'Stok hampir habis, segera checkout!',
+    stock_low_banner_desc: 'sisa',
+    product_unavailable: 'Produk tidak tersedia',
+    product_deleted: 'Produk sudah tidak dijual',
+    remove: 'Hapus',
+    loading: 'Memuat keranjang...',
+    footer_desc: 'Reptil premium dengan genetika eksklusif, dirawat dengan penuh perhatian.',
+    footer_shop: 'Belanja',
+    footer_all: 'Semua Produk',
+    footer_collection: 'Koleksi',
+    footer_best: 'Best Seller',
+    footer_help: 'Bantuan',
+    footer_email: 'Email',
+    footer_shipping: 'Pengiriman',
+    footer_guarantee: 'Garansi',
+    footer_account: 'Akun',
+    footer_login: 'Masuk',
+    footer_dashboard: 'Dashboard',
+    footer_cart: 'Keranjang',
+    footer_copyright: '© 2025 Klikva. Dibuat dengan semangat, dirawat dengan penuh perhatian.',
+    nav_shop: 'Belanja',
+    nav_login: 'Masuk',
+    toast_stock_limit: '⚠️ Stok {name} hanya tersisa {stock}',
+    toast_need_login: 'Silakan login dulu untuk checkout',
+    toast_checkout_blocked: 'Checkout dibatalkan. Ada produk stok habis.'
+  },
+  en: {
+    page_title: 'Cart — Klikva',
+    cart_title: 'Shopping Cart',
+    cart_items: 'items in cart',
+    order_summary: 'Order Summary',
+    subtotal: 'Subtotal',
+    shipping: 'Shipping',
+    free: 'FREE',
+    total: 'Total',
+    checkout: 'Checkout →',
+    checkout_blocked: '🚫 Stock Not Available',
+    checkout_hint_blocked: 'Remove out-of-stock products to continue',
+    continue_shopping: '← Continue Shopping',
+    empty_title: 'Your cart is empty',
+    empty_desc: "Looks like you haven't added any items yet.",
+    empty_btn: 'Start Shopping →',
+    stock_out: 'Out of Stock',
+    stock_left: 'Left',
+    stock_available: '✓ In stock',
+    stock_almost: 'Almost gone! Only',
+    stock_not_enough: 'Not enough stock (only',
+    stock_out_banner_title: 'Some products are out of stock!',
+    stock_out_banner_desc: 'Remove those products to continue checkout.',
+    stock_low_banner_title: 'Low stock, checkout soon!',
+    stock_low_banner_desc: 'only',
+    product_unavailable: 'Product unavailable',
+    product_deleted: 'Product no longer sold',
+    remove: 'Remove',
+    loading: 'Loading cart...',
+    footer_desc: 'Premium reptiles with exclusive genetics, raised with care.',
+    footer_shop: 'Shop',
+    footer_all: 'All Products',
+    footer_collection: 'Collection',
+    footer_best: 'Best Seller',
+    footer_help: 'Help',
+    footer_email: 'Email',
+    footer_shipping: 'Shipping',
+    footer_guarantee: 'Guarantee',
+    footer_account: 'Account',
+    footer_login: 'Sign in',
+    footer_dashboard: 'Dashboard',
+    footer_cart: 'Cart',
+    footer_copyright: '© 2025 Klikva. Made with passion, raised with care.',
+    nav_shop: 'Shop',
+    nav_login: 'Sign in',
+    toast_stock_limit: '⚠️ Only {stock} left of {name}',
+    toast_need_login: 'Please login first to checkout',
+    toast_checkout_blocked: 'Checkout cancelled. Some products are out of stock.'
+  }
+};
+
+let currentLang = localStorage.getItem('klikva_lang') || 'id';
+const t = (key, params = {}) => {
+  let text = (translations[currentLang] || translations.id)[key] || key;
+  Object.keys(params).forEach(k => { text = text.replace(`{${k}}`, params[k]); });
+  return text;
+};
+
+function applyLang() {
+  document.documentElement.lang = currentLang;
+  document.title = t('page_title');
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+  });
+  // Update static button labels
+  const navShop = document.getElementById('navShop');
+  if (navShop) navShop.textContent = t('nav_shop');
+  const loginBtn = document.getElementById('loginBtn');
+  if (loginBtn && loginBtn.style.display !== 'none') loginBtn.textContent = t('nav_login');
+}
+
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentLang = btn.dataset.lang;
+    localStorage.setItem('klikva_lang', currentLang);
+    applyLang();
+    renderCart();
+  });
+});
+
+/* =================================================================
+   THEME
+================================================================= */
+if (localStorage.getItem('klikva_theme') === 'dark') {
+  document.documentElement.setAttribute('data-theme', 'dark');
+}
+
+/* =================================================================
+   STATE
+================================================================= */
+let products = [];
+let productsLoaded = false;
+
+/* =================================================================
+   FETCH PRODUK DARI SHEET (sumber sama dengan shop.html)
+================================================================= */
+async function loadProducts() {
+  // Coba cache dulu biar cepat
+  const cached = localStorage.getItem('kv_products_cache');
+  if (cached) {
+    try { products = JSON.parse(cached); productsLoaded = true; } catch(e) {}
+  }
+  try {
+    const res = await fetch(`${API_URL}?action=getProducts`);
+    const data = await res.json();
+    if (data.success && data.data) {
+      products = data.data;
+      productsLoaded = true;
+      localStorage.setItem('kv_products_cache', JSON.stringify(products));
+    }
+  } catch (e) {
+    console.warn('Gagal fetch produk, pakai cache:', e);
+  }
+}
+
+/* =================================================================
+   CART
+================================================================= */
+function getCart() {
+  return JSON.parse(localStorage.getItem('klikva_cart') || '[]');
+}
+function saveCart(cart) {
+  localStorage.setItem('klikva_cart', JSON.stringify(cart));
+  updateCartCount();
+  renderCart();
+}
+function updateCartCount() {
+  const total = getCart().reduce((s, i) => s + i.quantity, 0);
+  const el = document.getElementById('cartCount');
+  if (el) el.textContent = total;
+}
+
+function findProduct(id) {
+  return products.find(p => p.id === id);
+}
+
+function checkStock(product, requestedQty) {
+  if (!product) return { status: 'removed', stock: null, message: t('product_deleted') };
+  if (product.stock === null || product.stock === undefined) return { status: 'ok', stock: null, message: t('stock_available') };
+  if (product.stock === 0) return { status: 'out', stock: 0, message: t('stock_out') };
+  if (requestedQty > product.stock) return { status: 'out', stock: product.stock, message: `${t('stock_not_enough')} ${product.stock})` };
+  if (product.stock <= 3) return { status: 'low', stock: product.stock, message: `${t('stock_almost')} ${product.stock}` };
+  return { status: 'ok', stock: product.stock, message: t('stock_available') };
+}
+
+function validateCartStock() {
+  const cart = getCart();
+  const issues = { out: [], low: [], removed: [] };
+  cart.forEach(item => {
+    const product = findProduct(item.id);
+    if (!product) { issues.removed.push({ id: item.id, qty: item.quantity }); return; }
+    const result = checkStock(product, item.quantity);
+    if (result.status === 'out') issues.out.push({ product, qty: item.quantity, stock: result.stock });
+    else if (result.status === 'low') issues.low.push({ product, qty: item.quantity, stock: result.stock });
+  });
+  return issues;
+}
+
+function updateQuantity(productId, change) {
+  const cart = getCart();
+  const item = cart.find(i => i.id === productId);
+  if (!item) return;
+  const product = findProduct(productId);
+  const newQty = item.quantity + change;
+  if (change > 0 && product && product.stock !== null && product.stock !== undefined) {
+    if (newQty > product.stock) {
+      showToast(t('toast_stock_limit', { name: product.name.substring(0, 25), stock: product.stock }), 'warning');
+      return;
+    }
+  }
+  item.quantity = newQty;
+  if (item.quantity <= 0) cart.splice(cart.indexOf(item), 1);
+  saveCart(cart);
+}
+
+function removeItem(productId) {
+  saveCart(getCart().filter(i => i.id !== productId));
+}
+
+/* =================================================================
+   TOAST
+================================================================= */
+function showToast(msg, type = 'info') {
+  const existing = document.getElementById('klikva-toast');
+  if (existing) existing.remove();
+  const colors = {
+    warning: { bg: 'rgba(217,119,6,.12)', border: 'rgba(217,119,6,.3)', color: '#D97706' },
+    error:   { bg: 'rgba(220,38,38,.12)', border: 'rgba(220,38,38,.3)', color: '#DC2626' },
+    success: { bg: 'rgba(5,150,105,.12)', border: 'rgba(5,150,105,.3)', color: '#059669' },
+    info:    { bg: 'rgba(107,114,128,.12)', border: 'rgba(107,114,128,.3)', color: 'var(--text)' }
+  };
+  const c = colors[type] || colors.info;
+  const toast = document.createElement('div');
+  toast.id = 'klikva-toast';
+  toast.style.cssText = `position:fixed;bottom:2rem;right:2rem;z-index:9999;background:${c.bg};border:1px solid ${c.border};color:${c.color};padding:.875rem 1.25rem;border-radius:.875rem;font-size:.875rem;font-weight:600;font-family:var(--font);box-shadow:0 8px 24px rgba(0,0,0,.15);animation:slideUp .3s ease;max-width:340px;line-height:1.4;backdrop-filter:blur(10px)`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  if (!document.getElementById('klikva-toast-style')) {
+    const s = document.createElement('style');
+    s.id = 'klikva-toast-style';
+    s.textContent = '@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}';
+    document.head.appendChild(s);
+  }
+  setTimeout(() => toast.remove(), 3500);
+}
+
+/* =================================================================
+   RENDER CART
+================================================================= */
+function renderCart() {
+  const container = document.getElementById('cartContainer');
+  const cart = getCart();
+
+  if (!productsLoaded && cart.length > 0) {
+    container.innerHTML = `<div class="loading-state"><div class="loading-spinner"></div><p style="margin-top:12px">${t('loading')}</p></div>`;
+    return;
+  }
+
+  if (cart.length === 0) {
+    container.innerHTML = `
+      <div class="empty-cart">
+        <div class="icon">🛒</div>
+        <h3>${t('empty_title')}</h3>
+        <p>${t('empty_desc')}</p>
+        <a href="shop.html" class="shop-now-btn">${t('empty_btn')}</a>
+      </div>
+    `;
+    return;
+  }
+
+  // Hitung subtotal
+  let subtotal = 0;
+  cart.forEach(item => {
+    const product = findProduct(item.id);
+    if (product) subtotal += product.price * item.quantity;
+  });
+  const shipping = subtotal > 500000 ? 0 : 30000;
+  const total = subtotal + shipping;
+
+  const issues = validateCartStock();
+  const hasOut = issues.out.length > 0 || issues.removed.length > 0;
+  const hasLow = issues.low.length > 0;
+
+  const outBanner = hasOut ? `
+    <div class="stock-alert-banner">
+      <span class="alert-icon">🚫</span>
+      <div>
+        <strong>${t('stock_out_banner_title')}</strong>
+        ${issues.out.map(i => `<span>• ${i.product.name.substring(0, 35)}${i.product.name.length > 35 ? '...' : ''} — ${i.stock === 0 ? t('stock_out') : `${t('stock_not_enough')} ${i.stock})`}</span><br>`).join('')}
+        ${issues.removed.map(i => `<span>• ${t('product_deleted')} (ID: ${i.id})</span><br>`).join('')}
+        ${t('stock_out_banner_desc')}
+      </div>
+    </div>
+  ` : '';
+
+  const lowBanner = hasLow ? `
+    <div class="stock-low-banner">
+      <span class="alert-icon">⚠️</span>
+      <div>
+        <strong>${t('stock_low_banner_title')}</strong>
+        ${issues.low.map(i => `<span>• ${i.product.name.substring(0, 35)}${i.product.name.length > 35 ? '...' : ''} — ${t('stock_low_banner_desc')} ${i.stock}</span><br>`).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  const totalQty = cart.reduce((s, i) => s + i.quantity, 0);
+
+  container.innerHTML = `
+    <div class="cart-header">
+      <h1>${t('cart_title')}</h1>
+      <p>${totalQty} ${t('cart_items')}</p>
+    </div>
+
+    <div class="cart-grid">
+      <div class="cart-items">
+        ${cart.map(item => {
+          const product = findProduct(item.id);
+          const isRemoved = !product;
+
+          if (isRemoved) {
+            return `
+              <div class="cart-item removed-product">
+                <div class="cart-item-image">
+                  <span style="font-size:2rem;opacity:.5">📦</span>
+                  <span class="stock-badge removed">${t('product_unavailable')}</span>
+                </div>
+                <div class="cart-item-info">
+                  <h3>${t('product_unavailable')}</h3>
+                  <div class="cart-item-category">ID: ${item.id}</div>
+                  <div class="stock-warning-text removed">${t('product_deleted')}</div>
+                </div>
+                <div class="cart-item-actions">
+                  <button class="remove-btn" onclick="removeItem(${item.id})">🗑️ ${t('remove')}</button>
+                </div>
+              </div>
+            `;
+          }
+
+          const stockResult = checkStock(product, item.quantity);
+          const isOut = stockResult.status === 'out';
+          const isLow = stockResult.status === 'low';
+
+          const badgeHtml = isOut
+            ? `<span class="stock-badge">${t('stock_out')}</span>`
+            : isLow
+              ? `<span class="stock-badge low">${t('stock_left')} ${product.stock}</span>`
+              : '';
+
+          const stockTextHtml = isOut
+            ? `<div class="stock-warning-text out">🚫 ${stockResult.message}</div>`
+            : isLow
+              ? `<div class="stock-warning-text low">⚠️ ${stockResult.message}</div>`
+              : `<div class="stock-warning-text ok">${stockResult.message}</div>`;
+
+          const plusDisabled = isOut || (product.stock !== null && product.stock !== undefined && item.quantity >= product.stock) ? 'disabled' : '';
+
+          // Support gambar foto (data:) atau emoji
+          const imgHtml = product.image && product.image.startsWith('data:')
+            ? `<img src="${product.image}" alt="${product.name}" draggable="false">`
+            : `<span style="font-size:2.5rem">${product.image || '📦'}</span>`;
+
+          return `
+            <div class="cart-item${isOut ? ' out-of-stock' : ''}">
+              <div class="cart-item-image">
+                ${imgHtml}
+                ${badgeHtml}
+              </div>
+              <div class="cart-item-info">
+                <h3>${product.name.length > 40 ? product.name.substring(0, 40) + '...' : product.name}</h3>
+                <div class="cart-item-category">${product.category}</div>
+                <div class="cart-item-price">Rp ${product.price.toLocaleString('id-ID')}</div>
+                ${stockTextHtml}
+              </div>
+              <div class="cart-item-actions">
+                <button class="quantity-btn" onclick="updateQuantity(${product.id}, -1)">−</button>
+                <span class="item-quantity">${item.quantity}</span>
+                <button class="quantity-btn" onclick="updateQuantity(${product.id}, 1)" ${plusDisabled}>+</button>
+                <button class="remove-btn" onclick="removeItem(${product.id})">🗑️ ${t('remove')}</button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div class="cart-summary">
+        <h3>${t('order_summary')}</h3>
+        ${outBanner}
+        ${lowBanner}
+        <div class="summary-row">
+          <span>${t('subtotal')}</span>
+          <span>Rp ${subtotal.toLocaleString('id-ID')}</span>
+        </div>
+        <div class="summary-row">
+          <span>${t('shipping')}</span>
+          <span>${shipping === 0 ? t('free') : 'Rp ' + shipping.toLocaleString('id-ID')}</span>
+        </div>
+        <div class="summary-row total">
+          <span>${t('total')}</span>
+          <span>Rp ${total.toLocaleString('id-ID')}</span>
+        </div>
+        <button class="checkout-btn" onclick="proceedToCheckout()" ${hasOut ? 'disabled' : ''}>
+          ${hasOut ? t('checkout_blocked') : t('checkout')}
+        </button>
+        <div class="checkout-hint">${hasOut ? t('checkout_hint_blocked') : ''}</div>
+        <a href="shop.html" class="continue-shop">${t('continue_shopping')}</a>
+      </div>
+    </div>
+  `;
+}
+
+/* =================================================================
+   CHECKOUT
+================================================================= */
+function proceedToCheckout() {
+  const user = localStorage.getItem('klikva_user');
+  if (!user) {
+    showToast(t('toast_need_login'), 'warning');
+    localStorage.setItem('klikva_pending_buy', 'checkout');
+    setTimeout(() => { window.location.href = 'registerd.html'; }, 1200);
+    return;
+  }
+  const issues = validateCartStock();
+  if (issues.out.length > 0 || issues.removed.length > 0) {
+    showToast(t('toast_checkout_blocked'), 'error');
+    return;
+  }
+  localStorage.setItem('klikva_checkout_time', Date.now().toString());
+  window.location.href = 'checkout.html';
+}
+
+/* =================================================================
+   NAVBAR AVATAR
+================================================================= */
+function renderNavbarAvatar() {
+  const container = document.getElementById('navAvatarContainer');
+  const loginBtn = document.getElementById('loginBtn');
+  const userRaw = localStorage.getItem('klikva_user');
+  if (!container) return;
+
+  if (userRaw) {
+    try {
+      const u = JSON.parse(userRaw);
+      const initial = (u.namaLengkap || 'M').charAt(0).toUpperCase();
+      const name = u.namaLengkap?.split(' ')[0] || 'Member';
+      const avatarUrl = u.avatarUrl || localStorage.getItem('klikva_avatar') || '';
+      const avatarContent = avatarUrl
+        ? `<img src="${avatarUrl}" alt="Avatar" onerror="this.parentElement.textContent='${initial}'">`
+        : initial;
+      container.innerHTML = `<div class="avatar-nav" onclick="window.location.href='dashboard.html'" title="${name}"><div class="avatar-nav-image">${avatarContent}</div><span class="avatar-nav-name">${name}</span></div>`;
+      if (loginBtn) loginBtn.style.display = 'none';
+    } catch(e) {
+      container.innerHTML = '';
+      if (loginBtn) loginBtn.style.display = '';
+    }
+  } else {
+    container.innerHTML = '';
+    if (loginBtn) loginBtn.style.display = '';
+  }
+}
+
+/* =================================================================
+   INIT
+================================================================= */
+(async function init() {
+  applyLang();
+  renderNavbarAvatar();
+  updateCartCount();
+  await loadProducts();
+  renderCart();
+})();
+</script>
+</body>
+</html>

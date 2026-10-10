@@ -1,0 +1,3638 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KLIKVA — Exotic Reptiles</title>
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery.ripples@0.6.3/dist/jquery.ripples-min.js"></script>
+  <script src="navbar-tabbar.js" defer></script>
+  <script src="komodo-orbit.js" defer></script>
+  <!-- Lenis dimuat secara dinamis di bawah (dengan CDN cadangan) supaya
+       animasi tidak gagal total kalau satu CDN sedang tidak bisa diakses -->
+  
+  <style>
+    /* ============================================
+       RESET & BASE
+    ============================================ */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+    
+    :root {
+      --bg: #FAF9F6;
+      --bg-card: #FFFFFF;
+      --text: #1A1A1A;
+      --text-secondary: #555555;
+      --text-light: #999999;
+      --border: #E8E6E1;
+      --shadow: 0 4px 20px rgba(0,0,0,0.04);
+      --shadow-hover: 0 12px 40px rgba(0,0,0,0.08);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --font: 'Space Grotesk', sans-serif;
+      --nav-bg: rgba(255,255,255,.88);
+      --nav-shadow: 0 1px 0 #e8e8e8;
+    }
+    
+    /* Dark Mode */
+    [data-theme="dark"] {
+      --bg: #121212;
+      --bg-card: #1E1E1E;
+      --text: #EDEDED;
+      --text-secondary: #AAAAAA;
+      --text-light: #777777;
+      --border: #2A2A2A;
+      --shadow: 0 4px 20px rgba(0,0,0,0.2);
+      --shadow-hover: 0 12px 40px rgba(0,0,0,0.3);
+      --nav-bg: rgba(18,18,18,.92);
+      --nav-shadow: 0 1px 0 #2A2A2A;
+    }
+    
+    html { scroll-behavior: auto; }
+    
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    
+    /* ============================================
+       LOADING
+    ============================================ */
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      transition: opacity 0.6s ease, visibility 0.6s ease, background 0.3s ease;
+    }
+    #loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    #loader .loader-percent {
+      font-size: clamp(3.5rem, 10vw, 7rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      transition: color 0.3s ease;
+    }
+    #loader .loader-bar-wrap {
+      width: 180px;
+      height: 2px;
+      background: var(--border);
+      margin-top: 1.4rem;
+      overflow: hidden;
+      transition: background 0.3s ease;
+    }
+    #loader .loader-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--text);
+      transition: width 0.15s ease-out, background 0.3s ease;
+    }
+    #loader p {
+      margin-top: 1.2rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--text-light);
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    /* ============================================
+       PAGE TRANSITION (dramatic exit)
+    ============================================ */
+    #pageTransition {
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #pageTransition .pt-panel {
+      position: absolute;
+      inset: 0;
+      background: var(--text);
+      transform: translateY(101%);
+    }
+    #pageTransition .pt-label {
+      position: relative;
+      z-index: 1;
+      color: var(--bg);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      opacity: 0;
+    }
+    #pageTransition.pt-active .pt-panel {
+      transition: transform 0.55s cubic-bezier(0.76, 0, 0.24, 1);
+      transform: translateY(0%);
+    }
+    #pageTransition.pt-active .pt-label {
+      transition: opacity 0.3s ease 0.25s;
+      opacity: 1;
+    }
+
+    /* ============================================
+       NAVBAR
+    ============================================ */
+    #navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 0 24px;
+      background: var(--nav-bg);
+      backdrop-filter: blur(20px);
+      box-shadow: var(--nav-shadow);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    /* ============================================
+   NAVBAR TRANSPARAN DI ATAS HERO
+============================================ */
+
+/* State awal: transparan (di atas hero) */
+#navbar {
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Teks & ikon jadi PUTIH saat transparan */
+#navbar:not(.nav-solid) .nav-logo,
+#navbar:not(.nav-solid) .nav-logo span,
+#navbar:not(.nav-solid) .nav-links a,
+#navbar:not(.nav-solid) .btn-ghost,
+#navbar:not(.nav-solid) .avatar-nav-name,
+#navbar:not(.nav-solid) .hamburger span {
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Logo titik "." tetap agak transparan */
+#navbar:not(.nav-solid) .nav-logo span {
+  opacity: 0.7;
+}
+
+/* Border tombol ghost jadi putih */
+#navbar:not(.nav-solid) .btn-ghost {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+#navbar:not(.nav-solid) .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Tombol Belanja (btn-solid) di atas hero: inverted (putih bg, gelap teks) */
+#navbar:not(.nav-solid) .btn-solid {
+  background: #fff !important;
+  color: #1A1A1A !important;
+}
+
+/* Tab bar tetap hitam (biar kontras dengan hero putih/terang apapun) */
+/* (tab bar sudah pakai warna sendiri, tidak perlu diubah) */
+
+/* State SOLID setelah scroll */
+#navbar.nav-solid {
+  background: var(--nav-bg) !important;
+  box-shadow: var(--nav-shadow) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+    .nav-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 68px;
+    }
+    .nav-logo {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .nav-logo span { color: var(--text-light); font-weight: 400; transition: color 0.3s ease; }
+    
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: .875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color .2s;
+      cursor: pointer;
+    }
+    .nav-links a:hover { color: var(--text); }
+    
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-ghost {
+      font-size: .875rem;
+      font-weight: 500;
+      color: var(--text);
+      padding: 9px 18px;
+      border-radius: 50px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      transition: border-color .2s, background .2s, color 0.3s ease;
+      text-decoration: none;
+      font-family: var(--font);
+      cursor: pointer;
+    }
+    .btn-ghost:hover { border-color: var(--text); background: var(--bg); }
+    
+    .btn-solid {
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--bg);
+  padding: 9px 20px;
+  border-radius: 50px;
+  background: var(--text);
+  border: none;
+  transition: opacity .2s, transform .2s, background 0.3s ease, color 0.3s ease;
+  text-decoration: none;
+  font-family: var(--font);
+  cursor: pointer;
+}
+    .btn-solid:hover { opacity: .8; transform: scale(1.03); }
+    
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      padding: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    .hamburger span {
+      display: block;
+      width: 22px;
+      height: 1.5px;
+      background: var(--text);
+      transition: all .3s;
+    }
+    .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+    /* Dark Mode Toggle - Navbar */
+    .theme-toggle {
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 50px;
+      padding: 6px 14px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: var(--text);
+      font-family: var(--font);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .theme-toggle:hover {
+      border-color: var(--text);
+      background: var(--bg);
+    }
+    .theme-toggle .icon {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .lang-switcher {
+      display: flex;
+      gap: 4px;
+    }
+    .lang-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      color: var(--text-secondary);
+      font-family: var(--font);
+      cursor: pointer;
+    }
+    .lang-btn.active {
+      background: var(--text);
+      border-color: var(--text);
+      color: var(--bg);
+    }
+    .lang-btn:hover:not(.active) { border-color: var(--text); color: var(--text); }
+
+    .avatar-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px 4px 4px;
+      border-radius: 50px;
+      transition: background 0.2s;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .avatar-nav:hover { background: var(--bg); }
+    .avatar-nav-image {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      overflow: hidden;
+      color: var(--text);
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+    .avatar-nav-name {
+      font-size: 0.8rem;
+      font-weight: 500;
+      max-width: 80px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text);
+      transition: color 0.3s ease;
+    }
+
+    .mobile-nav {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: var(--bg);
+      padding: 80px 24px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transform: translateX(100%);
+      transition: transform .35s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
+    }
+    .mobile-nav.open { transform: translateX(0); }
+    .mobile-nav a {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      display: block;
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+    .mobile-nav-btns {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .mobile-nav .btn-solid {
+      text-align: center;
+      padding: 14px;
+      border-radius: 16px;
+      font-size: 1rem;
+      display: block;
+      cursor: pointer;
+    }
+    .mobile-nav .btn-ghost {
+      text-align: center;
+      padding: 14px;
+      border-radius: 16px;
+      font-size: 1rem;
+      display: block;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-actions .btn-ghost:not(.theme-toggle),
+      .nav-actions .btn-solid { display: none; }
+      .hamburger { display: flex; }
+    }
+
+    /* ============================================
+       HERO
+    ============================================ */
+    .hero {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      z-index: 1;
+      padding-top: 0;
+      background: var(--bg);
+      overflow: hidden;
+    }
+    
+    .hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: url('LANDINGPAGE.jpg') center / cover no-repeat;
+}
+
+.hero-content { pointer-events: none; }
+.hero-content .btn { pointer-events: auto; }
+.hero-scroll { pointer-events: none; }
+    
+    .hero-bg .overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.25) 100%);
+  z-index: 1;
+}
+    
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      text-align: center;
+      padding: 0 2rem;
+      padding-top: 140px;
+      height: 100%;
+      max-width: 800px;
+      width: 100%;
+      color: white;
+    }
+    
+    @media (max-width: 768px) {
+      .hero-content {
+        padding-top: 120px;
+        padding-left: 1.2rem;
+        padding-right: 1.2rem;
+      }
+    }
+    
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      color: white;
+      font-size: 0.6rem;
+      font-weight: 600;
+      padding: 0.4rem 1.2rem;
+      border-radius: 2rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      transform: translateY(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .hero-title {
+      font-size: clamp(3rem, 6vw, 5rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      color: white;
+      margin-bottom: 1rem;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    .hero-title .highlight { 
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .hero-subtitle {
+      font-size: clamp(1rem, 1.2vw, 1.15rem);
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 400;
+      margin-bottom: 2rem;
+      line-height: 1.7;
+      max-width: 520px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    
+    .hero-buttons {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(15px);
+    }
+    
+    .btn {
+      padding: 0.8rem 2.2rem;
+      border: none;
+      border-radius: 2rem;
+      font-family: var(--font);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      pointer-events: auto;
+    }
+    .btn-primary {
+  background: #1A1A1A;
+  color: #FFFFFF;
+}
+.btn-primary:hover {
+  background: #2A2A2A;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+    .btn-secondary {
+      background: transparent;
+      color: white;
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+      border-color: white;
+    }
+    
+    .hero-scroll {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 2;
+    }
+    .hero-scroll .scroll-line {
+      width: 1px;
+      height: 30px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* ============================================
+       TRUSTED BY
+    ============================================ */
+    .trusted-section {
+      padding: 2.5rem 0 1.5rem;
+      overflow: hidden;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 1;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .trusted-label {
+      text-align: center;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--text-light);
+      font-weight: 600;
+      margin-bottom: 1.2rem;
+      transition: color 0.3s ease;
+    }
+
+    .trusted-wrapper {
+      overflow: hidden;
+      position: relative;
+    }
+
+    .trusted-wrapper::before,
+    .trusted-wrapper::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 60px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .trusted-wrapper::before {
+      left: 0;
+      background: linear-gradient(to right, var(--bg), transparent);
+    }
+
+    .trusted-wrapper::after {
+      right: 0;
+      background: linear-gradient(to left, var(--bg), transparent);
+    }
+
+    .trusted-track {
+      display: flex;
+      gap: 3rem;
+      width: max-content;
+      animation: scrollLeft 20s linear infinite;
+    }
+
+    .trusted-track:hover {
+      animation-play-state: paused;
+    }
+
+    .trusted-item {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      opacity: 0.5;
+      transition: opacity 0.3s, color 0.3s;
+      cursor: default;
+    }
+
+    .trusted-item:hover {
+      opacity: 1;
+      color: var(--text);
+    }
+
+    .trusted-divider {
+      color: var(--border);
+      font-weight: 300;
+      opacity: 0.4;
+      font-size: 0.6rem;
+      transition: color 0.3s ease;
+    }
+
+    @keyframes scrollLeft {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+
+    /* ============================================
+       SECTIONS
+    ============================================ */
+    .section {
+      position: relative;
+      padding: 5rem 2.5rem;
+      z-index: 1;
+      transition: background 0.3s ease;
+    }
+    @media (max-width: 768px) {
+      .section { padding: 3rem 1.2rem; }
+    }
+    
+    .section-header {
+      margin-bottom: 2.5rem;
+    }
+    .section-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-light);
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+    .section-title {
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1.2;
+      transition: color 0.3s ease;
+    }
+    .section-title .highlight { 
+      color: var(--text-light);
+      font-weight: 300;
+      transition: color 0.3s ease;
+    }
+    .section-desc {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      max-width: 440px;
+      line-height: 1.7;
+      font-weight: 400;
+      margin-top: 0.5rem;
+      transition: color 0.3s ease;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.2rem;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.2rem;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 3rem;
+      align-items: center;
+    }
+    
+    @media (max-width: 1024px) {
+      .grid-3 { grid-template-columns: repeat(2, 1fr); }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: 1fr; gap: 2rem; }
+    }
+    @media (max-width: 768px) {
+      .grid-3 { grid-template-columns: 1fr; }
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ============================================
+       BRAND STORY
+    ============================================ */
+    .brand-story-reverse .visual {
+      order: 2;
+      max-width: 85%;
+      justify-self: center;
+      align-self: center;
+      aspect-ratio: 9/10;
+      background: var(--bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: background 0.3s ease;
+    }
+
+    .brand-story-reverse .visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    @media (max-width: 1024px) {
+      .brand-story-reverse .visual {
+        order: 0;
+        max-width: 70%;
+      }
+    }
+
+    .brand-story .visual {
+      position: relative;
+      aspect-ratio: 4/5;
+      background: var(--bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: background 0.3s ease;
+    }
+    .brand-story .visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .brand-story .visual .number {
+      position: absolute;
+      bottom: 1.2rem;
+      right: 1.5rem;
+      font-size: 4rem;
+      font-weight: 700;
+      color: rgba(0,0,0,0.04);
+      line-height: 1;
+    }
+
+    .brand-story-reverse .visual .number {
+      right: auto;
+      left: 1.5rem;
+    }
+
+    /* ============================================
+       SERVICES
+    ============================================ */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .services-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .service-card {
+      background: var(--bg-card);
+      padding: 2rem 1.5rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      transition: all 0.4s ease;
+      cursor: default;
+      text-align: left;
+      opacity: 1;
+    }
+
+    .service-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-hover);
+      border-color: var(--text);
+    }
+
+    .service-card .icon {
+      font-size: 2.2rem;
+      margin-bottom: 1rem;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+
+    .service-card:hover .icon {
+      transform: scale(1.1) rotate(-5deg);
+    }
+
+    .service-card h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+      transition: color 0.3s ease;
+    }
+
+    .service-card .desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 0.3rem;
+      transition: color 0.3s ease;
+    }
+
+    .service-card .sub-desc {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      line-height: 1.5;
+      transition: color 0.3s ease;
+    }
+
+    .services-cta {
+      margin-top: 2.5rem;
+      text-align: center;
+    }
+
+    .services-cta .btn-outline {
+      padding: 0.7rem 2.2rem;
+      border: 1.5px solid var(--border);
+      border-radius: 2rem;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .services-cta .btn-outline:hover {
+      border-color: var(--text);
+      background: var(--text);
+      color: var(--bg);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all 0.4s ease;
+      border: 1px solid var(--border);
+      cursor: default;
+      opacity: 1;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-hover);
+    }
+    .card-img {
+      aspect-ratio: 3/4;
+      background: var(--bg);
+      overflow: hidden;
+      position: relative;
+    }
+    .card-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+    }
+    .card:hover .card-img img { transform: scale(1.04); }
+    .card-body {
+      padding: 1.2rem;
+    }
+    .card-body h4 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+      color: var(--text);
+      transition: color 0.3s ease;
+    }
+    .card-body p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      transition: color 0.3s ease;
+    }
+    .card-body .price {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 0.3rem;
+      color: var(--text);
+      transition: color 0.3s ease;
+    }
+
+    .shop-now-btn {
+      width: 100%;
+      margin-top: 0.8rem;
+      background: var(--text);
+      color: var(--bg);
+      font-family: var(--font);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 0.6rem;
+      border-radius: 2rem;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .product-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all 0.4s ease;
+      border: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-hover);
+    }
+    .product-card .img {
+      aspect-ratio: 1/1;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+    }
+    .product-card .info {
+      padding: 1rem 1.2rem 1.2rem;
+    }
+    .product-card .info h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+      color: var(--text);
+      transition: color 0.3s ease;
+    }
+    .product-card .info .price {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: color 0.3s ease;
+    }
+    .product-card .info .old-price {
+      font-size: 0.7rem;
+      color: var(--text-light);
+      text-decoration: line-through;
+      margin-left: 0.5rem;
+      font-weight: 400;
+      transition: color 0.3s ease;
+    }
+
+    /* ============================================
+       BESTSELLER
+    ============================================ */
+    .bestseller-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .bestseller-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .bestseller-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .bestseller-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 1.8rem 1.5rem 1.5rem;
+      border: 1px solid var(--border);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .bestseller-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-hover);
+      border-color: var(--text);
+    }
+
+    .bestseller-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--text);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .bestseller-card:hover::after {
+      opacity: 1;
+    }
+
+    .bestseller-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: #dc2626;
+      color: white;
+      font-size: 0.55rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.2rem 0.8rem;
+      border-radius: 50px;
+    }
+
+    .bestseller-icon {
+      font-size: 3rem;
+      margin-bottom: 0.8rem;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .bestseller-card:hover .bestseller-icon {
+      transform: scale(1.1) rotate(-6deg);
+    }
+
+    .bestseller-info h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.1rem;
+      transition: color 0.3s ease;
+    }
+
+    .morph-tag {
+      font-size: 0.7rem;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.6rem;
+      transition: color 0.3s ease;
+    }
+
+    .price-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .current-price {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      transition: color 0.3s ease;
+    }
+
+    .old-price {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      text-decoration: line-through;
+      transition: color 0.3s ease;
+    }
+
+    .add-btn {
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      font-family: var(--font);
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      letter-spacing: 0.02em;
+    }
+
+    .add-btn:hover {
+      background: var(--text-secondary);
+      transform: scale(1.02);
+    }
+
+    /* ============================================
+       THE KLIKVA EDIT
+    ============================================ */
+    .edit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+    }
+
+    @media (max-width: 1024px) {
+      .edit-grid {
+        grid-template-columns: 1fr;
+        gap: 1.2rem;
+      }
+    }
+
+    .edit-stack {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.2rem;
+    }
+
+    .edit-card {
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: all 0.4s ease;
+      aspect-ratio: 4/3;
+      background: var(--bg);
+    }
+
+    .big-card {
+      aspect-ratio: 4/3;
+    }
+
+    @media (max-width: 1024px) {
+      .big-card {
+        aspect-ratio: 16/9;
+      }
+    }
+
+    .stack-card {
+      aspect-ratio: 4/2.5;
+    }
+
+    .edit-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    .edit-card:hover img {
+      transform: scale(1.04);
+    }
+
+    .edit-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 1.5rem 1.2rem 1.2rem;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+      color: white;
+      transition: all 0.3s ease;
+    }
+
+    .edit-tag {
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      padding: 0.2rem 0.8rem;
+      border-radius: 50px;
+      display: inline-block;
+      margin-bottom: 0.3rem;
+      font-weight: 500;
+    }
+
+    .edit-overlay h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .edit-overlay h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .edit-overlay p {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      margin: 0;
+    }
+
+    .gallery-grid .gallery-item {
+      aspect-ratio: 1/1;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      transition: all 0.4s ease;
+      border: 1px solid var(--border);
+    }
+    .gallery-grid .gallery-item:hover {
+      transform: scale(1.02);
+      box-shadow: var(--shadow-hover);
+    }
+    .gallery-grid .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .newsletter-box {
+      text-align: center;
+      padding: 4rem;
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+    @media (max-width: 768px) {
+      .newsletter-box { padding: 2.5rem 1.5rem; }
+    }
+    .newsletter-box h2 {
+      font-size: clamp(1.8rem, 2.5vw, 2.5rem);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+      transition: color 0.3s ease;
+    }
+    .newsletter-box p {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      transition: color 0.3s ease;
+    }
+    .newsletter-form {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    @media (max-width: 768px) {
+      .newsletter-form { flex-direction: column; }
+    }
+    .newsletter-form input {
+      flex: 1;
+      padding: 0.7rem 1.2rem;
+      border: 1px solid var(--border);
+      border-radius: 2rem;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      font-family: var(--font);
+      font-size: 0.85rem;
+      transition: border-color 0.2s, background 0.3s ease, color 0.3s ease;
+    }
+    .newsletter-form input:focus { border-color: var(--text); }
+    .newsletter-form input::placeholder { color: var(--text-light); }
+    .newsletter-form input.error { border-color: #ff4444; }
+    .newsletter-form button {
+      padding: 0.7rem 1.8rem;
+      border: none;
+      border-radius: 2rem;
+      background: var(--text);
+      color: var(--bg);
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: var(--font);
+    }
+    .newsletter-form button:hover { background: var(--text-secondary); }
+
+    /* ============================================
+       CART PANEL
+    ============================================ */
+    .cart-panel {
+      display: block;
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 100%;
+      max-width: 380px;
+      height: 100vh;
+      background: var(--bg);
+      z-index: 10000;
+      padding: 1.5rem;
+      transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      box-shadow: -10px 0 40px rgba(0,0,0,0.05);
+    }
+    .cart-panel.open { right: 0; }
+
+    .cart-panel .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .cart-panel .cart-header h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .cart-panel .cart-header .close-cart {
+      background: none;
+      border: none;
+      color: var(--text-light);
+      font-size: 1.2rem;
+      cursor: pointer;
+      font-family: var(--font);
+    }
+    .cart-panel .cart-item {
+      display: flex;
+      gap: 0.8rem;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cart-panel .cart-item .item-icon {
+      font-size: 1.5rem;
+      width: 44px;
+      height: 44px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .cart-panel .cart-item .item-details {
+      flex: 1;
+    }
+    .cart-panel .cart-item .item-details h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.1rem;
+      color: var(--text);
+    }
+    .cart-panel .cart-item .item-details .item-price {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    .cart-panel .cart-item .item-remove {
+      background: none;
+      border: none;
+      color: var(--text-light);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: var(--font);
+      padding: 0 4px;
+    }
+    .cart-panel .cart-item .item-remove:hover { color: #ff4444; }
+    .cart-panel .cart-empty {
+      text-align: center;
+      padding: 2.5rem 0;
+      color: var(--text-light);
+    }
+    .cart-panel .cart-empty .empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .cart-panel .cart-total {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .cart-panel .cart-total .total-price { color: var(--text); }
+    .cart-panel .checkout-btn {
+      width: 100%;
+      padding: 0.8rem;
+      margin-top: 1rem;
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      border-radius: 2rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: var(--font);
+    }
+    .cart-panel .checkout-btn:hover { background: var(--text-secondary); }
+    .cart-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.15);
+      z-index: 9999;
+    }
+    .cart-overlay.show { display: block; }
+
+    /* ============================================
+       TOAST
+    ============================================ */
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--text);
+      color: var(--bg);
+      padding: 0.6rem 1.5rem;
+      border-radius: 2rem;
+      font-size: 0.8rem;
+      z-index: 9999;
+      opacity: 0;
+      transition: all 0.4s ease;
+      pointer-events: none;
+      font-weight: 500;
+      font-family: var(--font);
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ============================================
+       BIG CTA MARQUEE
+    ============================================ */
+    .big-marquee {
+      overflow: hidden;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 1.2rem 0;
+      background: var(--bg);
+      cursor: pointer;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+    .big-marquee-track {
+      display: flex;
+      align-items: center;
+      width: max-content;
+      animation: scrollLeft 18s linear infinite;
+    }
+    .big-marquee:hover .big-marquee-track {
+      animation-play-state: paused;
+    }
+    .big-marquee-item {
+      font-size: clamp(2.2rem, 7vw, 5.5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      white-space: nowrap;
+      padding: 0 1.5rem;
+      transition: color 0.3s ease;
+    }
+    .big-marquee-item.outline {
+      -webkit-text-stroke: 1.5px var(--text);
+      color: transparent;
+      transition: -webkit-text-stroke 0.3s ease;
+    }
+
+    /* ============================================
+       FOOTER
+    ============================================ */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 2.5rem 1.5rem;
+      z-index: 1;
+      position: relative;
+      background: var(--bg);
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+    @media (max-width: 768px) {
+      .footer { padding: 2rem 1.2rem 1.5rem; }
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 2.5rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 1024px) {
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .footer-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+    }
+    .footer-brand h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      color: var(--text);
+    }
+    .footer-brand p {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      line-height: 1.6;
+      transition: color 0.3s ease;
+    }
+    .footer-col h4 {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+    .footer-col a {
+      display: block;
+      color: var(--text-light);
+      text-decoration: none;
+      font-size: 0.8rem;
+      margin-bottom: 0.4rem;
+      transition: color 0.2s;
+      cursor: pointer;
+    }
+    .footer-col a:hover { color: var(--text); }
+    .footer-bottom {
+      text-align: center;
+      color: var(--text-light);
+      font-size: 0.65rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+
+    /* ============================================
+       CHAT WIDGET
+    ============================================ */
+    .chat-widget {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+    .chat-toggle {
+      width: 48px;
+      height: 48px;
+      background: var(--text);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      transition: all 0.3s;
+      color: var(--bg);
+      font-size: 1.1rem;
+      border: none;
+    }
+    .chat-toggle:hover { transform: scale(1.05); }
+    .chat-panel {
+      display: none;
+      position: absolute;
+      bottom: 56px;
+      right: 0;
+      width: 300px;
+      height: 380px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    @media (max-width: 768px) {
+      .chat-panel {
+        width: calc(100vw - 40px);
+        height: 50vh;
+        right: -10px;
+        bottom: 60px;
+      }
+    }
+    .chat-panel.show { display: flex; }
+    .chat-header {
+      padding: 0.8rem 1rem;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .chat-header span { font-weight: 600; font-size: 0.85rem; }
+    .chat-close { 
+      cursor: pointer; 
+      opacity: 0.4; 
+      transition: opacity 0.2s;
+    }
+    .chat-close:hover { opacity: 1; }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      background: var(--bg);
+      min-height: 0;
+      max-height: 100%;
+    }
+    .chat-message {
+      max-width: 80%;
+      padding: 0.5rem 0.8rem;
+      border-radius: 0.8rem;
+      font-size: 0.8rem;
+      animation: chatIn 0.3s ease;
+      word-wrap: break-word;
+    }
+    @keyframes chatIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .chat-message.user {
+      align-self: flex-end;
+      background: var(--text);
+      color: var(--bg);
+      border-radius: 0.8rem 0.8rem 0.2rem 0.8rem;
+    }
+    .chat-message.bot {
+      align-self: flex-start;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 0.8rem 0.8rem 0.8rem 0.2rem;
+    }
+    .chat-message .time {
+      font-size: 0.5rem;
+      opacity: 0.4;
+      margin-top: 0.15rem;
+      display: block;
+    }
+    .chat-typing {
+      align-self: flex-start;
+      color: var(--text-light);
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+    }
+    .chat-input-area {
+      padding: 0.8rem 1rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.5rem;
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+    .chat-input {
+      flex: 1;
+      padding: 0.5rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 2rem;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      font-family: var(--font);
+      font-size: 0.8rem;
+    }
+    .chat-input:focus { border-color: var(--text); }
+    .chat-send {
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.75rem;
+      transition: opacity 0.2s;
+      font-family: var(--font);
+    }
+    .chat-send:hover { opacity: 0.8; }
+    .chat-send:disabled { opacity: 0.3; cursor: not-allowed; }
+    /* ============================================
+   SERVICES — WHEEL SLIDER
+============================================ */
+.services-wheel-section {
+  overflow: visible !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.services-wheel-section .section-header {
+  padding: 0 2.5rem;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 768px) {
+  .services-wheel-section .section-header {
+    padding: 0 1.2rem;
+  }
+}
+
+/* Stage — area yang di-pin */
+.wheel-stage {
+  position: relative;
+  width: 100%;
+  height: 520px;         /* ← fixed px, bukan 70vh */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1400px;
+  overflow: hidden;
+  padding: 2rem 0;
+}
+
+/* Track — tempat kartu-kartu berjajar horizontal */
+.wheel-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Setiap kartu */
+.wheel-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 340px;
+  height: 420px;
+  padding: 2.4rem 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  transform-origin: center center;
+  transform: translate(-50%, -50%) scale(0.82);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  will-change: transform, opacity;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  box-sizing: border-box;
+}
+
+/* Kartu tengah (aktif) lebih besar & shadow tebal */
+.wheel-card.is-active {
+  box-shadow: 0 24px 60px rgba(0,0,0,0.12);
+  border-color: var(--text);
+  z-index: 5;
+}
+
+[data-theme="dark"] .wheel-card.is-active {
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+
+/* Top accent bar warna-warni */
+.wheel-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 3px;
+  background: var(--card-accent, #7EE0A1);
+  border-radius: 0 0 3px 3px;
+  opacity: 0;
+  transition: opacity 0.4s ease, left 0.4s ease, right 0.4s ease;
+}
+.wheel-card.is-active::before {
+  opacity: 1;
+  left: 8%;
+  right: 8%;
+}
+
+/* Isi kartu */
+.wheel-icon {
+  font-size: 3rem;
+  margin-bottom: 1.2rem;
+  display: block;
+  transition: transform 0.4s ease;
+}
+.wheel-card.is-active .wheel-icon {
+  transform: scale(1.15) rotate(-4deg);
+}
+
+.wheel-card h4 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.6rem;
+  transition: color 0.3s ease;
+}
+
+.wheel-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.wheel-sub {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  line-height: 1.55;
+  transition: color 0.3s ease;
+}
+
+/* Indicator dots */
+.wheel-dots {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.6rem;
+  z-index: 200;
+}
+/* ============================================
+   WHEEL SLIDER — ARROWS
+============================================ */
+.wheel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 200;
+  transition: background 0.25s ease, border-color 0.25s ease,
+              color 0.25s ease, transform 0.25s ease;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wheel-arrow:hover {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.wheel-arrow:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.wheel-arrow:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
+.wheel-arrow-prev { left: 5%; }
+.wheel-arrow-next { right: 5%; }
+
+[data-theme="dark"] .wheel-arrow {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+/* Mobile: arrow lebih kecil */
+@media (max-width: 768px) {
+  .wheel-arrow {
+    width: 42px;
+    height: 42px;
+  }
+  .wheel-arrow-prev { left: 3%; }
+  .wheel-arrow-next { right: 3%; }
+}
+
+/* Fallback kalau no-gsap: sembunyikan arrow */
+.services-wheel-section.no-gsap .wheel-arrow { display: none; }
+
+.wheel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  padding: 0;
+}
+
+.wheel-dot.is-active {
+  width: 24px;
+  border-radius: 4px;
+  background: var(--text);
+}
+
+.wheel-dot:hover:not(.is-active) {
+  background: var(--text-light);
+  transform: scale(1.2);
+}
+
+/* Mobile — kartu lebih kecil, tidak terlalu 3D */
+@media (max-width: 768px) {
+  .wheel-card {
+    width: 260px;
+    height: 360px;
+    padding: 1.8rem 1.4rem;
+  }
+  .wheel-icon { font-size: 2.4rem; }
+  .wheel-card h4 { font-size: 1rem; }
+  .wheel-desc { font-size: 0.82rem; }
+  .wheel-sub { font-size: 0.72rem; }
+}
+
+/* Fallback: kalau GSAP gagal, tampilkan sebagai grid biasa */
+.services-wheel-section.no-gsap .wheel-stage {
+  height: auto;
+  min-height: 0;
+  perspective: none;
+  padding: 2rem 2.5rem;
+}
+.services-wheel-section.no-gsap .wheel-track {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  position: static;
+}
+.services-wheel-section.no-gsap .wheel-card {
+  position: static;
+  transform: none !important;
+  opacity: 1 !important;
+  width: 100%;
+  height: auto;
+  min-height: 260px;
+}
+.services-wheel-section.no-gsap .wheel-dots { display: none; }
+
+@media (max-width: 1024px) {
+  .services-wheel-section.no-gsap .wheel-track {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .services-wheel-section.no-gsap .wheel-track {
+    grid-template-columns: 1fr;
+  }
+}
+  </style>
+</head>
+<body>
+
+<!-- ============================================
+     LOADING
+============================================ -->
+<div id="loader">
+  <div class="loader-percent" id="loaderPercent">0%</div>
+  <div class="loader-bar-wrap"><div class="loader-bar" id="loaderBar"></div></div>
+  <p>KLIKVA</p>
+</div>
+
+<!-- ============================================
+     PAGE TRANSITION
+============================================ -->
+<div id="pageTransition">
+  <div class="pt-panel"></div>
+  <div class="pt-label" id="ptLabel">KLIKVA</div>
+</div>
+
+<!-- ============================================
+     TOAST
+============================================ -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================================
+     CART PANEL
+============================================ -->
+<div class="cart-overlay" id="cartOverlay"></div>
+<div class="cart-panel" id="cartPanel">
+  <div class="cart-header">
+    <h2 data-i18n="cart.title">Cart</h2>
+    <button class="close-cart" id="closeCart">✕</button>
+  </div>
+  <div id="cartItems">
+    <div class="cart-empty">
+      <div class="empty-icon">🛒</div>
+      <p data-i18n="cart.empty">Your cart is empty</p>
+    </div>
+  </div>
+  <div id="cartFooter" style="display:none;">
+    <div class="cart-total">
+      <span data-i18n="cart.total">Total</span>
+      <span class="total-price" id="cartTotal">Rp 0</span>
+    </div>
+    <button class="checkout-btn" onclick="showToast('🛍️ Checkout coming soon!')" data-i18n="cart.checkout">Checkout</button>
+  </div>
+</div>
+
+<!-- ============================================
+     NAVBAR
+============================================ -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">Klikva<span>.</span></a>
+    <ul class="nav-links">
+      <li><a href="#collection" data-i18n="nav.products">Produk</a></li>
+      <li><a href="#brand" data-i18n="nav.why">Kenapa Klikva</a></li>
+      <li><a href="#services" data-i18n="nav.services">Layanan</a></li>
+      <li><a href="#gallery" data-i18n="nav.reviews">Ulasan</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="id" onclick="switchLanguage('id')">ID</button>
+        <button class="lang-btn" data-lang="en" onclick="switchLanguage('en')">EN</button>
+      </div>
+      
+      <div id="navAvatarContainer"></div>
+      
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <span class="icon">🌓</span>
+      </button>
+      
+      <a href="registerd.html" class="btn-ghost" id="loginBtn" data-i18n="nav.login">Masuk</a>
+      <a href="shop.html" class="btn-solid" data-i18n="nav.shop">Belanja</a>
+    </div>
+    <button class="hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ============================================
+     MOBILE NAV
+============================================ -->
+<div class="mobile-nav" id="mobileNav">
+  <a href="#collection" data-i18n="nav.products">Produk</a>
+  <a href="#brand" data-i18n="nav.why">Kenapa Klikva</a>
+  <a href="#services" data-i18n="nav.services">Layanan</a>
+  <a href="#gallery" data-i18n="nav.reviews">Ulasan</a>
+  <div class="mobile-nav-btns" id="mobileNavBtns">
+    <a href="registerd.html" class="btn-ghost" data-i18n="nav.login">Masuk</a>
+    <a href="shop.html" class="btn-solid" data-i18n="nav.shop">Belanja Sekarang</a>
+  </div>
+</div>
+
+<!-- ============================================
+     HERO
+============================================ -->
+<section class="hero" id="hero">
+ <div class="hero-bg" id="heroBg" role="img" aria-label="Exotic Reptiles">
+  <div class="overlay"></div>
+</div>
+  
+  <div class="hero-content">
+    <div class="hero-badge" id="heroBadge" data-i18n="hero.badge">Exotic Collection 2025</div>
+    <h1 class="hero-title" id="heroTitle">Premium<br><span class="highlight" data-i18n="hero.highlight">Reptiles</span></h1>
+    <p class="hero-subtitle" id="heroSubtitle" data-i18n="hero.subtitle">Curated snakes and geckos with exceptional genetics. Quality you can trust.</p>
+    <div class="hero-buttons" id="heroButtons">
+      <button class="btn btn-primary" onclick="goToShop()" data-i18n="hero.shop">Shop Now</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('collection').scrollIntoView({behavior:'smooth'})" data-i18n="hero.explore">Explore</button>
+    </div>
+  </div>
+  
+  <div class="hero-scroll">
+    <span></span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ============================================
+     TRUSTED BY
+============================================ -->
+<section class="trusted-section">
+  <div class="trusted-label" data-i18n="trusted.title">✦ Trusted by Klikva</div>
+  <div class="trusted-wrapper">
+    <div class="trusted-track" id="trustedTrack">
+      <span class="trusted-item">BALL PYTHON</span>
+      <span class="trusted-divider">✦</span>
+      <span class="trusted-item">LEOPARD GECKO</span>
+      <span class="trusted-divider">✦</span>
+      <span class="trusted-item">CRESTED GECKO</span>
+      <span class="trusted-divider">✦</span>
+      <span class="trusted-item">CORN SNAKE</span>
+      <span class="trusted-divider">✦</span>
+      <span class="trusted-item">BOA CONSTRICTOR</span>
+      <span class="trusted-divider">✦</span>
+      <span class="trusted-item">MORPHS</span>
+      <span class="trusted-divider">✦</span>
+      <span class="trusted-item">PREMIUM GENETICS</span>
+      <span class="trusted-divider">✦</span>
+      <span class="trusted-item">HEALTHY REPTILES</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     BRAND STORY
+============================================ -->
+<section class="section" id="brand">
+  <div class="grid-2 brand-story-reverse">
+    <div>
+      <div class="section-label" data-i18n="brand.label">About</div>
+      <h2 class="section-title">Made for <span class="highlight" data-i18n="brand.highlight">you</span></h2>
+      <p class="section-desc" data-i18n="brand.desc">Premium reptiles with exceptional genetics, raised with care. Whether you're a first-time owner or a seasoned collector, we're here to help you find your perfect companion.</p>
+      <button class="btn btn-primary" onclick="goToShop()" style="margin-top:1.5rem; background:var(--text); color:var(--bg); padding:0.8rem 2.2rem; border:none; border-radius:2rem; font-family:var(--font); font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.3s ease;" data-i18n="brand.shop">Shop Now</button>
+      
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border); transition: border-color 0.3s ease;">
+        <div>
+          <div style="font-size:1.5rem; font-weight:700; color:var(--text); transition: color 0.3s ease;">800+</div>
+          <div style="font-size:0.65rem; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; transition: color 0.3s ease;" data-i18n="brand.stats1">Happy Customers</div>
+        </div>
+        <div>
+          <div style="font-size:1.5rem; font-weight:700; color:var(--text); transition: color 0.3s ease;">30+</div>
+          <div style="font-size:0.65rem; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; transition: color 0.3s ease;" data-i18n="brand.stats2">Years of Experience</div>
+        </div>
+        <div>
+          <div style="font-size:1.5rem; font-weight:700; color:var(--text); transition: color 0.3s ease;">120+</div>
+          <div style="font-size:0.65rem; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; transition: color 0.3s ease;" data-i18n="brand.stats3">Award Winning</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="visual">
+      <img src="MADEFORU.jpg" alt="Brand" loading="lazy">
+      <span class="number">01</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     SERVICES — Wheel Slider
+============================================ -->
+<section class="section services-wheel-section" id="services">
+  <div class="section-header">
+    <div class="section-label" data-i18n="services.label">Our Services</div>
+    <h2 class="section-title">What We <span class="highlight" data-i18n="services.highlight">Provide</span></h2>
+    <p class="section-desc" data-i18n="services.desc">From premium morphs to expert care — everything you need for your reptile journey.</p>
+  </div>
+
+  <!-- Stage: tinggi fixed supaya scroll wheel bisa di-pin -->
+  <div class="wheel-stage" id="wheelStage">
+    <!-- Arrow kiri -->
+    <button class="wheel-arrow wheel-arrow-prev" id="wheelPrev" aria-label="Previous">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+
+     <div class="wheel-track" id="wheelTrack">
+      <div class="wheel-card" data-color="#7EE0A1">
+      <span class="wheel-icon">🐍</span>
+      <h4 data-i18n="services.s1.title">Premium Morphs</h4>
+      <p class="wheel-desc" data-i18n="services.s1.desc">Curated ball pythons with stunning genetics.</p>
+      <p class="wheel-sub" data-i18n="services.s1.sub">From pastel to clown — find your perfect morph.</p>
+  </div>
+
+      <div class="wheel-card" data-color="#85E5E3">
+        <span class="wheel-icon">🦎</span>
+        <h4 data-i18n="services.s2.title">Healthy Geckos</h4>
+        <p class="wheel-desc" data-i18n="services.s2.desc">Quality leopard and crested geckos.</p>
+        <p class="wheel-sub" data-i18n="services.s2.sub">Vibrant colors, strong genetics, and great temperament.</p>
+      </div>
+
+      <div class="wheel-card" data-color="#FFD66B">
+        <span class="wheel-icon">🧬</span>
+        <h4 data-i18n="services.s3.title">Breeding Pairs</h4>
+        <p class="wheel-desc" data-i18n="services.s3.desc">Ready-to-breed pairs for serious collectors.</p>
+        <p class="wheel-sub" data-i18n="services.s3.sub">Proven genetics to start or expand your collection.</p>
+      </div>
+
+      <div class="wheel-card" data-color="#F398B4">
+        <span class="wheel-icon">🏠</span>
+        <h4 data-i18n="services.s4.title">Starter Kits</h4>
+        <p class="wheel-desc" data-i18n="services.s4.desc">Complete setup for beginners.</p>
+        <p class="wheel-sub" data-i18n="services.s4.sub">Everything you need to welcome your new reptile home.</p>
+      </div>
+
+      <div class="wheel-card" data-color="#A78BFA">
+        <span class="wheel-icon">🩺</span>
+        <h4 data-i18n="services.s5.title">Health Guarantee</h4>
+        <p class="wheel-desc" data-i18n="services.s5.desc">All reptiles are vet-checked and healthy.</p>
+        <p class="wheel-sub" data-i18n="services.s5.sub">30-day health guarantee on every purchase.</p>
+      </div>
+
+      <div class="wheel-card" data-color="#FB923C">
+        <span class="wheel-icon">📦</span>
+        <h4 data-i18n="services.s6.title">Safe Shipping</h4>
+        <p class="wheel-desc" data-i18n="services.s6.desc">Expert packaging for safe delivery.</p>
+        <p class="wheel-sub" data-i18n="services.s6.sub">Temperature-controlled shipping nationwide.</p>
+      </div>
+    </div>
+
+    <button class="wheel-arrow wheel-arrow-next" id="wheelNext" aria-label="Next">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
+
+    <!-- Indicator dots -->
+    <div class="wheel-dots" id="wheelDots"></div>
+  </div>
+</section>
+
+<!-- ============================================
+     COLLECTION
+============================================ -->
+<section class="section" id="collection">
+  <div class="section-header">
+    <div class="section-label" data-i18n="collection.label">Collection</div>
+    <h2 class="section-title">The <span class="highlight" data-i18n="collection.highlight">Reptile Edit</span></h2>
+    <p class="section-desc" data-i18n="collection.desc">Premium morphs and healthy reptiles for every enthusiast.</p>
+  </div>
+  
+  <div class="grid-3" id="collectionGrid">
+    <div class="card">
+      <div class="card-img">
+        <img src="https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=400&h=600&fit=crop&crop=center" alt="Ball Python" loading="lazy" onerror="this.style.display='none'">
+      </div>
+      <div class="card-body">
+        <h4>Ball Python - Pastel</h4>
+        <p data-i18n="collection.tag1">Premium Morph</p>
+        <div class="price">Rp 2.500.000</div>
+        <button class="shop-now-btn" onclick="navigateWithTransition('shop.html')" data-i18n="collection.shop">Shop Now</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-img">
+        <img src="https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=600&fit=crop&crop=center" alt="Leopard Gecko" loading="lazy" onerror="this.style.display='none'">
+      </div>
+      <div class="card-body">
+        <h4>Leopard Gecko - Tangerine</h4>
+        <p data-i18n="collection.tag2">Stunning Colors</p>
+        <div class="price">Rp 1.200.000</div>
+        <button class="shop-now-btn" onclick="navigateWithTransition('shop.html')" data-i18n="collection.shop">Shop Now</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-img">
+        <img src="https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=400&h=600&fit=crop&crop=center" alt="Corn Snake" loading="lazy" onerror="this.style.display='none'">
+      </div>
+      <div class="card-body">
+        <h4>Corn Snake - Snow</h4>
+        <p data-i18n="collection.tag3">Rare Morph</p>
+        <div class="price">Rp 1.800.000</div>
+        <button class="shop-now-btn" onclick="navigateWithTransition('shop.html')" data-i18n="collection.shop">Shop Now</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-img">
+        <img src="https://images.unsplash.com/photo-1516724562728-afc824a36e84?w=400&h=600&fit=crop&crop=center" alt="Boa Constrictor" loading="lazy" onerror="this.style.display='none'">
+      </div>
+      <div class="card-body">
+        <h4>Boa Constrictor - Sunglow</h4>
+        <p data-i18n="collection.tag4">Rare Genetics</p>
+        <div class="price">Rp 3.900.000</div>
+        <button class="shop-now-btn" onclick="navigateWithTransition('shop.html')" data-i18n="collection.shop">Shop Now</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-img">
+        <img src="https://images.unsplash.com/photo-1585336261022-680e295ce3fe?w=400&h=600&fit=crop&crop=center" alt="Crested Gecko" loading="lazy" onerror="this.style.display='none'">
+      </div>
+      <div class="card-body">
+        <h4>Crested Gecko - Harlequin</h4>
+        <p data-i18n="collection.tag5">Bold Pattern</p>
+        <div class="price">Rp 2.300.000</div>
+        <button class="shop-now-btn" onclick="navigateWithTransition('shop.html')" data-i18n="collection.shop">Shop Now</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-img">
+        <img src="https://images.unsplash.com/photo-1531386151447-fd76ad50012f?w=400&h=600&fit=crop&crop=center" alt="Ball Python Piebald" loading="lazy" onerror="this.style.display='none'">
+      </div>
+      <div class="card-body">
+        <h4>Ball Python - Piebald</h4>
+        <p data-i18n="collection.tag6">Collector's Choice</p>
+        <div class="price">Rp 5.200.000</div>
+        <button class="shop-now-btn" onclick="navigateWithTransition('shop.html')" data-i18n="collection.shop">Shop Now</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     BESTSELLERS
+============================================ -->
+<section class="section" id="bestsellers" style="background: var(--bg); padding-bottom: 4rem;">
+  <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap;">
+    <div>
+      <div class="section-label" data-i18n="bestseller.label">★ Best Sellers</div>
+      <h2 class="section-title">Most <span class="highlight" data-i18n="bestseller.highlight">Wanted</span></h2>
+      <p class="section-desc" data-i18n="bestseller.desc">The morphs everyone's talking about.</p>
+    </div>
+    <a onclick="goToShop()" style="font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); text-decoration: none; border-bottom: 2px solid var(--text); padding-bottom: 2px; cursor: pointer; transition: color 0.3s ease, border-color 0.3s ease;" data-i18n="bestseller.view">View All →</a>
+  </div>
+
+  <div class="bestseller-grid" id="bestsellerGrid">
+    <div class="bestseller-card" onclick="addToCart('Ball Python - Clown', 'Rp 3.200.000', '🐍')">
+      <div class="bestseller-badge" data-i18n="bestseller.badge1">🔥 Sale</div>
+      <div class="bestseller-icon">🐍</div>
+      <div class="bestseller-info">
+        <h4>Ball Python — Clown</h4>
+        <p class="morph-tag" data-i18n="bestseller.tag1">Rare Morph</p>
+        <div class="price-row">
+          <span class="current-price">Rp 3.200.000</span>
+          <span class="old-price">Rp 4.500.000</span>
+        </div>
+        <button class="add-btn" data-i18n="bestseller.add">+ Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="bestseller-card" onclick="addToCart('Crested Gecko - Pinstripe', 'Rp 2.100.000', '🦎')">
+      <div class="bestseller-badge" style="background: #2d2d2d;" data-i18n="bestseller.badge2">⭐ Top</div>
+      <div class="bestseller-icon">🦎</div>
+      <div class="bestseller-info">
+        <h4>Crested Gecko — Pinstripe</h4>
+        <p class="morph-tag" data-i18n="bestseller.tag2">Bold Pattern</p>
+        <div class="price-row">
+          <span class="current-price">Rp 2.100.000</span>
+          <span class="old-price">Rp 2.800.000</span>
+        </div>
+        <button class="add-btn" data-i18n="bestseller.add">+ Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="bestseller-card" onclick="addToCart('Boa Constrictor - Red Tail', 'Rp 4.500.000', '🐍')">
+      <div class="bestseller-badge" style="background: #b45309;" data-i18n="bestseller.badge3">🏆 Premium</div>
+      <div class="bestseller-icon">🐍</div>
+      <div class="bestseller-info">
+        <h4>Boa Constrictor — Red Tail</h4>
+        <p class="morph-tag" data-i18n="bestseller.tag3">Collector's Item</p>
+        <div class="price-row">
+          <span class="current-price">Rp 4.500.000</span>
+          <span class="old-price">Rp 6.000.000</span>
+        </div>
+        <button class="add-btn" data-i18n="bestseller.add">+ Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="bestseller-card" onclick="addToCart('Leopard Gecko - Eclipse', 'Rp 1.800.000', '🦎')">
+      <div class="bestseller-badge" style="background: #0d9488;" data-i18n="bestseller.badge4">🌿 Best Value</div>
+      <div class="bestseller-icon">🦎</div>
+      <div class="bestseller-info">
+        <h4>Leopard Gecko — Eclipse</h4>
+        <p class="morph-tag" data-i18n="bestseller.tag4">Stunning Eyes</p>
+        <div class="price-row">
+          <span class="current-price">Rp 1.800.000</span>
+          <span class="old-price">Rp 2.500.000</span>
+        </div>
+        <button class="add-btn" data-i18n="bestseller.add">+ Add to Cart</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     THE KLIKVA EDIT
+============================================ -->
+<section class="section" id="gallery" style="padding-top: 1rem;">
+  <div class="section-header" style="margin-bottom: 2rem;">
+    <div class="section-label" data-i18n="gallery.label">✦ The Klikva Edit</div>
+    <h2 class="section-title">Real People, <span class="highlight" data-i18n="gallery.highlight">Real Reptiles</span></h2>
+    <p class="section-desc" data-i18n="gallery.desc">From our community to your feed.</p>
+  </div>
+
+  <div class="edit-grid">
+    <div class="edit-big">
+      <div class="edit-card big-card">
+        <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&h=600&fit=crop&crop=center" alt="Reptile community" loading="lazy" onerror="this.style.display='none'">
+        <div class="edit-overlay">
+          <span class="edit-tag" data-i18n="gallery.tag1">🐍 Community Pick</span>
+          <h3>Pastel Clown</h3>
+          <p>by @reptile_enthusiast</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="edit-stack">
+      <div class="edit-card stack-card">
+        <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=300&fit=crop&crop=center" alt="Reptile" loading="lazy" onerror="this.style.display='none'">
+        <div class="edit-overlay">
+          <span class="edit-tag" data-i18n="gallery.tag2">🦎 Morph of the Day</span>
+          <h4>Eclipse</h4>
+        </div>
+      </div>
+      <div class="edit-card stack-card">
+        <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&h=300&fit=crop&crop=center" alt="Reptile" loading="lazy" onerror="this.style.display='none'">
+        <div class="edit-overlay">
+          <span class="edit-tag" data-i18n="gallery.tag3">📸 Fan Favorite</span>
+          <h4>Pinstripe</h4>
+        </div>
+      </div>
+      <div class="edit-card stack-card">
+        <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400&h=300&fit=crop&crop=center" alt="Reptile" loading="lazy" onerror="this.style.display='none'">
+        <div class="edit-overlay">
+          <span class="edit-tag" data-i18n="gallery.tag4">🌟 Rising Star</span>
+          <h4>Red Tail</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align: center; margin-top: 3rem;">
+    <button class="btn-outline" onclick="showToast('📸 Tag @klikva to be featured!')" style="padding: 0.7rem 2.5rem; border: 1.5px solid var(--border); border-radius: 2rem; background: transparent; color: var(--text); font-family: var(--font); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;" data-i18n="gallery.cta">
+      Share Your Edit →
+    </button>
+  </div>
+</section>
+
+<!-- ============================================
+     BIG CTA MARQUEE
+============================================ -->
+<section class="big-marquee" onclick="goToShop()" aria-label="Shop Now">
+  <div class="big-marquee-track" id="bigMarqueeTrack">
+    <span class="big-marquee-item">Shop Now</span>
+    <span class="big-marquee-item outline">✦</span>
+    <span class="big-marquee-item">Shop Now</span>
+    <span class="big-marquee-item outline">✦</span>
+    <span class="big-marquee-item">Shop Now</span>
+    <span class="big-marquee-item outline">✦</span>
+    <span class="big-marquee-item">Shop Now</span>
+    <span class="big-marquee-item outline">✦</span>
+  </div>
+</section>
+
+<!-- ============================================
+     NEWSLETTER
+============================================ -->
+<section class="section" id="newsletter">
+  <div class="newsletter-box">
+    <h2>Stay <span style="font-weight:300;" data-i18n="newsletter.highlight">inspired</span></h2>
+    <p data-i18n="newsletter.desc">Get early access, exclusive drops, and reptile care tips.</p>
+    <form class="newsletter-form" id="newsletterForm" novalidate>
+      <input type="email" id="newsletterEmail" placeholder="Enter your email" required data-i18n-placeholder="newsletter.placeholder">
+      <button type="submit" data-i18n="newsletter.submit">Subscribe</button>
+    </form>
+  </div>
+</section>
+
+<!-- ============================================
+     FOOTER
+============================================ -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <h3>KLIKVA</h3>
+      <p data-i18n="footer.tagline">Premium reptiles.<br>Exceptional genetics.</p>
+      <p style="margin-top:0.8rem;">© 2025 Klikva</p>
+    </div>
+    <div class="footer-col">
+      <h4 data-i18n="footer.shop">Shop</h4>
+      <a onclick="goToShop();" data-i18n="footer.all">All Products</a>
+      <a onclick="document.getElementById('collection').scrollIntoView({behavior:'smooth'})" data-i18n="footer.new">New Arrivals</a>
+      <a onclick="document.getElementById('bestsellers').scrollIntoView({behavior:'smooth'})" data-i18n="footer.best">Best Sellers</a>
+    </div>
+    <div class="footer-col">
+      <h4 data-i18n="footer.support">Support</h4>
+      <a onclick="showToast('📧 support@klikva.com')" data-i18n="footer.email">Email</a>
+      <a onclick="showToast('🚚 2-5 days shipping')" data-i18n="footer.shipping">Shipping</a>
+      <a onclick="showToast('🔄 30 days health guarantee')" data-i18n="footer.guarantee">Health Guarantee</a>
+    </div>
+    <div class="footer-col">
+      <h4 data-i18n="footer.connect">Connect</h4>
+      <a onclick="showToast('📷 @klikva')">Instagram</a>
+      <a onclick="showToast('🎵 @klikva')">TikTok</a>
+      <a onclick="showToast('🐦 @klikva')">Twitter</a>
+    </div>
+  </div>
+  <div class="footer-bottom" data-i18n="footer.bottom">
+    Made with passion. Raised with care.
+  </div>
+</footer>
+
+<!-- ============================================
+     CHAT
+============================================ -->
+<div class="chat-widget">
+  <button class="chat-toggle" id="chatToggle">💬</button>
+  <div class="chat-panel" id="chatPanel">
+    <div class="chat-header">
+      <span data-i18n="chat.title">💬 Chat</span>
+      <span class="chat-close" id="chatClose">✕</span>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="chat-message bot">
+        <span data-i18n="chat.welcome">Hey! 👋 How can I help you find your perfect reptile?</span><br>
+        <span class="time">Now</span>
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <input type="text" class="chat-input" id="chatInput" placeholder="Type a message..." data-i18n-placeholder="chat.placeholder">
+      <button class="chat-send" id="chatSend" data-i18n="chat.send">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================
+  // BAGIAN KRITIS — DIJALANKAN PALING AWAL
+  // ============================================
+
+  function getCart() {
+    return JSON.parse(localStorage.getItem('klikva_cart') || '[]');
+  }
+
+  function saveCart(cart) {
+    localStorage.setItem('klikva_cart', JSON.stringify(cart));
+    updateCartBadge();
+  }
+
+  function updateCartBadge() {
+    const cart = getCart();
+    const total = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const badge = document.getElementById('cartBadge');
+    if (badge) {
+      badge.textContent = total;
+      badge.style.display = total > 0 ? 'block' : 'none';
+      if (total > 0) {
+        badge.classList.remove('bounce');
+        void badge.offsetWidth;
+        badge.classList.add('bounce');
+      }
+    }
+  }
+
+  function renderNavbarAvatar() {
+    const container = document.getElementById('navAvatarContainer');
+    const loginBtn = document.getElementById('loginBtn');
+    const user = localStorage.getItem('klikva_user');
+    if (user) {
+      const userData = JSON.parse(user);
+      const initial = (userData.namaLengkap || 'M').charAt(0).toUpperCase();
+      const userName = userData.namaLengkap?.split(' ')[0] || 'Member';
+      container.innerHTML = `
+        <div class="avatar-nav" onclick="navigateWithTransition('dashboard.html')">
+          <div class="avatar-nav-image"><span>${initial}</span></div>
+          <span class="avatar-nav-name">${userName}</span>
+        </div>
+      `;
+      if (loginBtn) loginBtn.style.display = 'none';
+    } else {
+      container.innerHTML = '';
+      if (loginBtn) loginBtn.style.display = '';
+    }
+  }
+
+  renderNavbarAvatar();
+  updateCartBadge();
+
+  // ============================================
+  // LOADER PERCENTAGE COUNTER
+  // ============================================
+  (function initLoaderProgress() {
+    const percentEl = document.getElementById('loaderPercent');
+    const barEl = document.getElementById('loaderBar');
+    let progress = 0;
+    let doneLoading = false;
+
+    function paint(val) {
+      const v = Math.min(100, Math.round(val));
+      if (percentEl) percentEl.textContent = v + '%';
+      if (barEl) barEl.style.width = v + '%';
+    }
+
+    function tick() {
+      if (doneLoading) return;
+      progress += Math.random() * 9 + 2;
+      if (progress > 90) progress = 90;
+      paint(progress);
+      setTimeout(tick, 90 + Math.random() * 120);
+    }
+    tick();
+
+    window.addEventListener('load', () => {
+      doneLoading = true;
+      progress = 100;
+      paint(100);
+    });
+
+    window.__loaderShowFull = () => paint(100);
+  })();
+
+  // ============================================
+  // TRANSLATIONS
+  // ============================================
+  const translations = {
+    id: {
+      'nav.products': 'Produk',
+      'nav.why': 'Kenapa Klikva',
+      'nav.services': 'Layanan',
+      'nav.reviews': 'Ulasan',
+      'nav.login': 'Masuk',
+      'nav.shop': 'Belanja',
+      'hero.badge': 'Exotic Collection 2025',
+      'hero.highlight': 'Reptiles',
+      'hero.subtitle': 'Ular dan gecko pilihan dengan genetika eksklusif. Kualitas yang bisa Anda percaya.',
+      'hero.shop': 'Belanja Sekarang',
+      'hero.explore': 'Jelajahi',
+      'trusted.title': '✦ Dipercaya oleh Klikva',
+      'brand.label': 'Tentang',
+      'brand.highlight': 'kamu',
+      'brand.desc': 'Reptil premium dengan genetika eksklusif, dipelihara dengan penuh perhatian. Apakah Anda pemula atau kolektor berpengalaman, kami siap membantu Anda menemukan pendamping sempurna.',
+      'brand.shop': 'Belanja Sekarang',
+      'brand.stats1': 'Pelanggan Bahagia',
+      'brand.stats2': 'Tahun Pengalaman',
+      'brand.stats3': 'Penghargaan',
+      'services.label': 'Layanan Kami',
+      'services.highlight': 'Kami Berikan',
+      'services.desc': 'Dari morph premium hingga perawatan ahli — semua yang Anda butuhkan untuk perjalanan reptil Anda.',
+      'services.s1.title': 'Morph Premium',
+      'services.s1.desc': 'Pilihan ular ball python dengan genetika menakjubkan.',
+      'services.s1.sub': 'Dari pastel hingga clown — temukan morph sempurna Anda.',
+      'services.s2.title': 'Gecko Sehat',
+      'services.s2.desc': 'Gecko leopard dan crested berkualitas.',
+      'services.s2.sub': 'Warna cerah, genetika kuat, dan temperamen baik.',
+      'services.s3.title': 'Pasangan Breeding',
+      'services.s3.desc': 'Pasangan siap kawin untuk kolektor serius.',
+      'services.s3.sub': 'Genetika terbukti untuk memulai atau mengembangkan koleksi.',
+      'services.s4.title': 'Paket Pemula',
+      'services.s4.desc': 'Setup lengkap untuk pemula.',
+      'services.s4.sub': 'Semua yang Anda butuhkan untuk menyambut reptil baru.',
+      'services.s5.title': 'Garansi Kesehatan',
+      'services.s5.desc': 'Semua reptil diperiksa dokter hewan dan sehat.',
+      'services.s5.sub': 'Garansi kesehatan 30 hari untuk setiap pembelian.',
+      'services.s6.title': 'Pengiriman Aman',
+      'services.s6.desc': 'Pengemasan ahli untuk pengiriman aman.',
+      'services.s6.sub': 'Pengiriman suhu terkontrol nasional.',
+      'services.cta': 'Lihat Semua Layanan →',
+      'collection.label': 'Koleksi',
+      'collection.highlight': 'Reptil Pilihan',
+      'collection.desc': 'Morph premium dan reptil sehat untuk setiap penggemar.',
+      'collection.tag1': 'Morph Premium',
+      'collection.tag2': 'Warna Menakjubkan',
+      'collection.tag3': 'Morph Langka',
+      'collection.tag4': 'Genetika Langka',
+      'collection.tag5': 'Pola Berani',
+      'collection.tag6': 'Pilihan Kolektor',
+      'collection.shop': 'Belanja Sekarang',
+      'bestseller.label': '★ Best Seller',
+      'bestseller.highlight': 'Dicari',
+      'bestseller.desc': 'Morph yang sedang dibicarakan semua orang.',
+      'bestseller.view': 'Lihat Semua →',
+      'bestseller.badge1': '🔥 Diskon',
+      'bestseller.badge2': '⭐ Teratas',
+      'bestseller.badge3': '🏆 Premium',
+      'bestseller.badge4': '🌿 Nilai Terbaik',
+      'bestseller.tag1': 'Morph Langka',
+      'bestseller.tag2': 'Pola Berani',
+      'bestseller.tag3': 'Barang Kolektor',
+      'bestseller.tag4': 'Mata Menakjubkan',
+      'bestseller.add': '+ Tambah ke Keranjang',
+      'gallery.label': '✦ The Klikva Edit',
+      'gallery.highlight': 'Reptil Nyata',
+      'gallery.desc': 'Dari komunitas kami ke feed Anda.',
+      'gallery.tag1': '🐍 Pilihan Komunitas',
+      'gallery.tag2': '🦎 Morph Hari Ini',
+      'gallery.tag3': '📸 Favorit Fans',
+      'gallery.tag4': '🌟 Bintang Baru',
+      'gallery.cta': 'Bagikan Edit Anda →',
+      'newsletter.highlight': 'terinspirasi',
+      'newsletter.desc': 'Dapatkan akses awal, drop eksklusif, dan tips perawatan reptil.',
+      'newsletter.placeholder': 'Masukkan email Anda',
+      'newsletter.submit': 'Berlangganan',
+      'footer.tagline': 'Reptil premium.<br>Genetika eksklusif.',
+      'footer.shop': 'Belanja',
+      'footer.all': 'Semua Produk',
+      'footer.new': 'Baru Datang',
+      'footer.best': 'Best Seller',
+      'footer.support': 'Dukungan',
+      'footer.email': 'Email',
+      'footer.shipping': 'Pengiriman',
+      'footer.guarantee': 'Garansi Kesehatan',
+      'footer.connect': 'Hubungi',
+      'footer.bottom': 'Dibuat dengan semangat. Dipelihara dengan penuh perhatian.',
+      'cart.title': 'Keranjang',
+      'cart.empty': 'Keranjang Anda kosong',
+      'cart.total': 'Total',
+      'cart.checkout': 'Checkout',
+      'chat.title': '💬 Obrolan',
+      'chat.welcome': 'Hai! 👋 Bagaimana saya bisa membantu Anda menemukan reptil sempurna?',
+      'chat.placeholder': 'Ketik pesan...',
+      'chat.send': 'Kirim'
+    },
+    en: {
+      'nav.products': 'Products',
+      'nav.why': 'Why Klikva',
+      'nav.services': 'Services',
+      'nav.reviews': 'Reviews',
+      'nav.login': 'Login',
+      'nav.shop': 'Shop',
+      'hero.badge': 'Exotic Collection 2025',
+      'hero.highlight': 'Reptiles',
+      'hero.subtitle': 'Curated snakes and geckos with exceptional genetics. Quality you can trust.',
+      'hero.shop': 'Shop Now',
+      'hero.explore': 'Explore',
+      'trusted.title': '✦ Trusted by Klikva',
+      'brand.label': 'About',
+      'brand.highlight': 'you',
+      'brand.desc': 'Premium reptiles with exceptional genetics, raised with care. Whether you\'re a first-time owner or a seasoned collector, we\'re here to help you find your perfect companion.',
+      'brand.shop': 'Shop Now',
+      'brand.stats1': 'Happy Customers',
+      'brand.stats2': 'Years of Experience',
+      'brand.stats3': 'Award Winning',
+      'services.label': 'Our Services',
+      'services.highlight': 'Provide',
+      'services.desc': 'From premium morphs to expert care — everything you need for your reptile journey.',
+      'services.s1.title': 'Premium Morphs',
+      'services.s1.desc': 'Curated ball pythons with stunning genetics.',
+      'services.s1.sub': 'From pastel to clown — find your perfect morph.',
+      'services.s2.title': 'Healthy Geckos',
+      'services.s2.desc': 'Quality leopard and crested geckos.',
+      'services.s2.sub': 'Vibrant colors, strong genetics, and great temperament.',
+      'services.s3.title': 'Breeding Pairs',
+      'services.s3.desc': 'Ready-to-breed pairs for serious collectors.',
+      'services.s3.sub': 'Proven genetics to start or expand your collection.',
+      'services.s4.title': 'Starter Kits',
+      'services.s4.desc': 'Complete setup for beginners.',
+      'services.s4.sub': 'Everything you need to welcome your new reptile home.',
+      'services.s5.title': 'Health Guarantee',
+      'services.s5.desc': 'All reptiles are vet-checked and healthy.',
+      'services.s5.sub': '30-day health guarantee on every purchase.',
+      'services.s6.title': 'Safe Shipping',
+      'services.s6.desc': 'Expert packaging for safe delivery.',
+      'services.s6.sub': 'Temperature-controlled shipping nationwide.',
+      'services.cta': 'View All Services →',
+      'collection.label': 'Collection',
+      'collection.highlight': 'Reptile Edit',
+      'collection.desc': 'Premium morphs and healthy reptiles for every enthusiast.',
+      'collection.tag1': 'Premium Morph',
+      'collection.tag2': 'Stunning Colors',
+      'collection.tag3': 'Rare Morph',
+      'collection.tag4': 'Rare Genetics',
+      'collection.tag5': 'Bold Pattern',
+      'collection.tag6': 'Collector\'s Choice',
+      'collection.shop': 'Shop Now',
+      'bestseller.label': '★ Best Sellers',
+      'bestseller.highlight': 'Wanted',
+      'bestseller.desc': 'The morphs everyone\'s talking about.',
+      'bestseller.view': 'View All →',
+      'bestseller.badge1': '🔥 Sale',
+      'bestseller.badge2': '⭐ Top',
+      'bestseller.badge3': '🏆 Premium',
+      'bestseller.badge4': '🌿 Best Value',
+      'bestseller.tag1': 'Rare Morph',
+      'bestseller.tag2': 'Bold Pattern',
+      'bestseller.tag3': 'Collector\'s Item',
+      'bestseller.tag4': 'Stunning Eyes',
+      'bestseller.add': '+ Add to Cart',
+      'gallery.label': '✦ The Klikva Edit',
+      'gallery.highlight': 'Real Reptiles',
+      'gallery.desc': 'From our community to your feed.',
+      'gallery.tag1': '🐍 Community Pick',
+      'gallery.tag2': '🦎 Morph of the Day',
+      'gallery.tag3': '📸 Fan Favorite',
+      'gallery.tag4': '🌟 Rising Star',
+      'gallery.cta': 'Share Your Edit →',
+      'newsletter.highlight': 'inspired',
+      'newsletter.desc': 'Get early access, exclusive drops, and reptile care tips.',
+      'newsletter.placeholder': 'Enter your email',
+      'newsletter.submit': 'Subscribe',
+      'footer.tagline': 'Premium reptiles.<br>Exceptional genetics.',
+      'footer.shop': 'Shop',
+      'footer.all': 'All Products',
+      'footer.new': 'New Arrivals',
+      'footer.best': 'Best Sellers',
+      'footer.support': 'Support',
+      'footer.email': 'Email',
+      'footer.shipping': 'Shipping',
+      'footer.guarantee': 'Health Guarantee',
+      'footer.connect': 'Connect',
+      'footer.bottom': 'Made with passion. Raised with care.',
+      'cart.title': 'Cart',
+      'cart.empty': 'Your cart is empty',
+      'cart.total': 'Total',
+      'cart.checkout': 'Checkout',
+      'chat.title': '💬 Chat',
+      'chat.welcome': 'Hey! 👋 How can I help you find your perfect reptile?',
+      'chat.placeholder': 'Type a message...',
+      'chat.send': 'Send'
+    }
+  };
+
+  let currentLang = localStorage.getItem('klikva_lang') || 'id';
+
+  function switchLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('klikva_lang', lang);
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+    translatePage(lang);
+  }
+
+  function translatePage(lang) {
+    const t = translations[lang];
+    if (!t) return;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t[key]) el.textContent = t[key];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (t[key]) el.placeholder = t[key];
+    });
+    document.documentElement.lang = lang;
+  }
+
+  // ============================================
+  // LOADING
+  // ============================================
+  window.addEventListener('load', () => {
+    if (window.__loaderShowFull) window.__loaderShowFull();
+    setTimeout(() => {
+      document.getElementById('loader').classList.add('hidden');
+    }, 350);
+
+    translatePage(currentLang);
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === currentLang);
+    });
+    renderNavbarAvatar();
+  });
+
+  // ============================================
+  // TOAST
+  // ============================================
+  function showToast(msg, duration = 2500) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => el.classList.remove('show'), duration);
+  }
+
+  // ============================================
+  // DARK MODE TOGGLE
+  // ============================================
+  const themeToggle = document.getElementById('themeToggle');
+  const currentTheme = localStorage.getItem('klikva_theme') || 'light';
+
+  if (currentTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeToggle.innerHTML = '<span class="icon">☀️</span>';
+  }
+
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('klikva_theme', 'light');
+      themeToggle.innerHTML = '<span class="icon">🌓</span>';
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('klikva_theme', 'dark');
+      themeToggle.innerHTML = '<span class="icon">☀️</span>';
+    }
+  });
+
+  // ============================================
+  // TRUSTED MARQUEE
+  // ============================================
+  const trustedTrack = document.getElementById('trustedTrack');
+  if (trustedTrack) {
+    const items = trustedTrack.innerHTML;
+    trustedTrack.innerHTML = items + items;
+  }
+
+  const bigMarqueeTrack = document.getElementById('bigMarqueeTrack');
+  if (bigMarqueeTrack) {
+    const items = bigMarqueeTrack.innerHTML;
+    bigMarqueeTrack.innerHTML = items + items;
+  }
+
+  // ============================================
+  // MOBILE NAV
+  // ============================================
+  const hamburger = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobileNav');
+  let menuOpen = false;
+
+  hamburger.addEventListener('click', () => {
+    menuOpen = !menuOpen;
+    mobileNav.classList.toggle('open', menuOpen);
+    hamburger.classList.toggle('active', menuOpen);
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+  });
+
+  mobileNav.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      menuOpen = false;
+      mobileNav.classList.remove('open');
+      hamburger.classList.remove('active');
+      document.body.style.overflow = '';
+    });
+  });
+
+  // ============================================
+  // CART PANEL FUNCTIONS
+  // ============================================
+  function addToCart(name, price, icon = '🐍') {
+    const cart = getCart();
+    const existing = cart.find(item => item.name === name);
+    if (existing) {
+      existing.quantity++;
+    } else {
+      cart.push({ name, price, icon, quantity: 1, id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5) });
+    }
+    saveCart(cart);
+    showToast(`✅ ${name} added to cart`);
+  }
+
+  function toggleCart() {
+    const panel = document.getElementById('cartPanel');
+    const overlay = document.getElementById('cartOverlay');
+    panel.classList.toggle('open');
+    overlay.classList.toggle('show');
+    document.body.style.overflow = panel.classList.contains('open') ? 'hidden' : '';
+    renderCart();
+  }
+
+  function removeFromCart(id) {
+    let cart = getCart();
+    cart = cart.filter(item => item.id !== id);
+    saveCart(cart);
+    renderCart();
+    showToast('🗑️ Removed from cart');
+  }
+
+  function renderCart() {
+    const container = document.getElementById('cartItems');
+    const footer = document.getElementById('cartFooter');
+    const totalEl = document.getElementById('cartTotal');
+    const cart = getCart();
+
+    if (cart.length === 0) {
+      container.innerHTML = `<div class="cart-empty"><div class="empty-icon">🛒</div><p data-i18n="cart.empty">${translations[currentLang]['cart.empty']}</p></div>`;
+      footer.style.display = 'none';
+      return;
+    }
+
+    let html = '', total = 0;
+    cart.forEach(item => {
+      const priceNum = parseInt(String(item.price ?? '').replace(/[^0-9]/g, ''), 10) || 0;
+      total += priceNum * item.quantity;
+      html += `
+        <div class="cart-item">
+          <div class="item-icon">${item.icon}</div>
+          <div class="item-details">
+            <h4>${item.name} × ${item.quantity}</h4>
+            <div class="item-price">${item.price}</div>
+          </div>
+          <button class="item-remove" onclick="removeFromCart('${item.id}')">✕</button>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+    footer.style.display = 'block';
+    totalEl.textContent = `Rp ${total.toLocaleString('id-ID')}`;
+  }
+
+  document.getElementById('closeCart').addEventListener('click', toggleCart);
+  document.getElementById('cartOverlay').addEventListener('click', toggleCart);
+
+  renderCart();
+
+  // ============================================
+  // SHOP
+  // ============================================
+  function goToShop() {
+    navigateWithTransition('shop.html');
+  }
+
+  // ============================================
+  // DRAMATIC PAGE TRANSITION
+  // ============================================
+  function navigateWithTransition(url) {
+    setTimeout(() => { window.location.href = url; }, 560);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('a[href$=".html"]').forEach(link => {
+      if (link.target === '_blank' || link.hostname !== window.location.hostname) return;
+      link.addEventListener('click', (e) => {
+        const href = link.getAttribute('href');
+        if (!href) return;
+        e.preventDefault();
+        navigateWithTransition(href);
+      });
+    });
+  });
+
+  // ============================================
+  // NEWSLETTER
+  // ============================================
+  document.getElementById('newsletterForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('newsletterEmail');
+    const emailValue = email.value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailValue || !emailRegex.test(emailValue)) {
+      email.classList.add('error');
+      showToast('⚠️ Please enter a valid email');
+      return;
+    }
+    email.classList.remove('error');
+    showToast('📬 You\'re in!');
+    this.reset();
+  });
+
+  // ============================================
+  // GSAP SCROLL-REVEAL ANIMATIONS
+  // ============================================
+  let lenisInstance = null;
+
+  try {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const heroTl = gsap.timeline({ defaults: { ease: 'power3.out', duration: 0.8 } });
+    heroTl.to('#heroBadge', { opacity: 1, y: 0, duration: 0.5, delay: 0.3 })
+      .to('#heroTitle', { opacity: 1, y: 0, duration: 0.7 }, '-=0.2')
+      .to('#heroSubtitle', { opacity: 1, y: 0, duration: 0.5 }, '-=0.4')
+      .to('#heroButtons', { opacity: 1, y: 0, duration: 0.5 }, '-=0.3');
+
+    gsap.from('.brand-story-reverse .visual', {
+      scrollTrigger: { trigger: '#brand', start: 'top 85%', toggleActions: 'play none none reverse' },
+      x: 30, opacity: 0, duration: 0.6, ease: 'power3.out'
+    });
+
+    gsap.from('#brand .section-title', {
+      scrollTrigger: { trigger: '#brand', start: 'top 85%', toggleActions: 'play none none reverse' },
+      y: 20, opacity: 0, duration: 0.5, ease: 'power3.out', delay: 0.1
+    });
+
+    gsap.from('#brand .section-desc', {
+      scrollTrigger: { trigger: '#brand', start: 'top 85%', toggleActions: 'play none none reverse' },
+      y: 15, opacity: 0, duration: 0.4, ease: 'power3.out', delay: 0.15
+    });
+
+    gsap.from('#brand .btn-primary', {
+      scrollTrigger: { trigger: '#brand', start: 'top 85%', toggleActions: 'play none none reverse' },
+      y: 15, opacity: 0, duration: 0.4, ease: 'power3.out', delay: 0.2
+    });
+
+    gsap.from('#brand .brand-story > div:last-child > div:last-child > div', {
+      scrollTrigger: { trigger: '#brand', start: 'top 85%', toggleActions: 'play none none reverse' },
+      y: 20, opacity: 0, duration: 0.4, ease: 'power3.out', delay: 0.25, stagger: 0.08
+    });
+
+    ScrollTrigger.batch('.service-card', {
+      start: 'top 92%',
+      onEnter: (batch) => gsap.to(batch, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out', stagger: 0.08, overwrite: true }),
+      once: true
+    });
+    gsap.set('.service-card', { y: 40, opacity: 0 });
+
+    ScrollTrigger.batch('.card', {
+      start: 'top 92%',
+      onEnter: (batch) => gsap.to(batch, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out', stagger: 0.06, overwrite: true }),
+      once: true
+    });
+    gsap.set('.card', { y: 40, opacity: 0 });
+
+    ScrollTrigger.batch('.bestseller-card', {
+      start: 'top 92%',
+      onEnter: (batch) => gsap.to(batch, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out', stagger: 0.08, overwrite: true }),
+      once: true
+    });
+    gsap.set('.bestseller-card', { y: 40, opacity: 0 });
+
+    ScrollTrigger.batch('.edit-card', {
+      start: 'top 90%',
+      onEnter: (batch) => gsap.to(batch, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out', stagger: 0.08, overwrite: true }),
+      once: true
+    });
+    gsap.set('.edit-card', { y: 30, opacity: 0 });
+
+    gsap.from('.newsletter-box', {
+      scrollTrigger: { trigger: '.newsletter-box', start: 'top 88%', toggleActions: 'play none none reverse' },
+      y: 20, opacity: 0, duration: 0.5, ease: 'power3.out'
+    });
+
+    function refreshScrollTriggerAfterImages() {
+      const images = Array.from(document.images);
+      const promises = images.map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => {
+          img.addEventListener('load', resolve, { once: true });
+          img.addEventListener('error', resolve, { once: true });
+        });
+      });
+      Promise.all(promises).then(() => ScrollTrigger.refresh());
+    }
+    refreshScrollTriggerAfterImages();
+
+    window.addEventListener('resize', () => ScrollTrigger.refresh());
+  } catch (err) {
+    console.error('GSAP gagal dimuat, animasi scroll-reveal dilewati:', err);
+  }
+
+  // ============================================
+  // LENIS SMOOTH SCROLL
+  // ============================================
+  function loadScriptOnce(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('Failed to load ' + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function initLenisSmoothScroll() {
+    // 1. Load Lenis dari CDN kalau belum ada
+    if (!window.Lenis) {
+      const cdns = [
+        'https://unpkg.com/lenis@1.1.18/dist/lenis.min.js',
+        'https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js'
+      ];
+      for (const url of cdns) {
+        if (window.Lenis) break;
+        try { await loadScriptOnce(url); }
+        catch (e) { console.warn('Lenis gagal dari', url); }
+      }
+    }
+
+    // 2. Init Lenis DULU (biar lenisInstance sudah ada saat watcher jalan)
+    if (window.Lenis) {
+      try {
+        lenisInstance = new Lenis({
+          duration: 0.18,
+          easing: (t) => 1 - Math.pow(1 - t, 3),
+          orientation: 'vertical',
+          wheelMultiplier: 1.6,
+          smoothWheel: true,
+          touchMultiplier: 2.0,
+          infinite: false,
+          syncTouch: true,
+          lerp: 0.15,
+        });
+
+        if (typeof gsap !== 'undefined') {
+          gsap.ticker.add((time) => lenisInstance.raf(time * 1000));
+          gsap.ticker.lagSmoothing(0);
+        }
+
+        lenisInstance.on('scroll', () => {
+          if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.update();
+        });
+      } catch (err) {
+        console.error('Gagal inisialisasi Lenis:', err);
+        lenisInstance = null;
+      }
+    }
+  }
+
+  initLenisSmoothScroll();
+
+  // ============================================
+  // HERO RIPPLE (jQuery Ripples)
+  // ============================================
+  (function initHeroRipples() {
+    const hero = document.getElementById('heroBg');
+    if (!hero || !window.jQuery || !jQuery.fn.ripples) return;
+
+    if (location.protocol === 'file:') {
+      console.info('Ripple dilewati: jalankan lewat server lokal / hosting, bukan file://');
+      return;
+    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const $hero = jQuery(hero);
+
+    try {
+      $hero.ripples({
+        resolution: isMobile ? 256 : 512,
+        dropRadius: isMobile ? 16 : 20,
+        perturbance: 0.04,
+        interactive: true
+      });
+    } catch (err) {
+      console.warn('Ripple tidak didukung browser ini:', err);
+      return;
+    }
+
+    let visible = true;
+    new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      $hero.ripples(visible ? 'play' : 'pause');
+    }).observe(hero);
+
+    setInterval(() => {
+      if (!visible || document.hidden) return;
+      $hero.ripples('drop',
+        Math.random() * hero.offsetWidth,
+        Math.random() * hero.offsetHeight * 0.8,
+        18, 0.035);
+    }, 4000);
+  })();
+
+  // ============================================
+  // CHAT
+  // ============================================
+  const chatToggle = document.getElementById('chatToggle');
+  const chatPanel = document.getElementById('chatPanel');
+  const chatClose = document.getElementById('chatClose');
+  const chatSend = document.getElementById('chatSend');
+  const chatInput = document.getElementById('chatInput');
+  const chatMessages = document.getElementById('chatMessages');
+
+  const aiResponses = {
+    'halo': 'Hey! 👋 How can I help you find your perfect reptile?',
+    'hai': 'Hi! Welcome to Klikva Reptiles.',
+    'help': 'Sure! I can help with reptiles, morphs, or care tips.',
+    'bantu': 'Tentu! Ada yang bisa dibantu?',
+    'ular': 'We have amazing ball pythons, corn snakes, and boas! 🐍',
+    'gecko': 'We have leopard geckos, crested geckos, and more! 🦎',
+    'morph': 'We have stunning morphs like Pastel, Clown, and Pinstripe!',
+    'harga': 'Prices start from Rp 1.200.000. We have premium morphs too!',
+    'pengiriman': '2-5 working days with temperature-controlled shipping. 🚚',
+    'garansi': '30-day health guarantee on every reptile.',
+    'care': 'We provide complete care guides and starter kits.',
+    'thanks': 'You\'re welcome! 😊',
+    'terima kasih': 'Sama-sama! 😊',
+    'makasih': 'Sama-sama! 😊',
+    'oke': 'Great! Let me know if you need anything. 😊',
+  };
+
+  function getAIResponse(message) {
+    const lower = message.toLowerCase().trim();
+    for (const [key, response] of Object.entries(aiResponses)) {
+      if (lower.includes(key)) return response;
+    }
+    if (lower.includes('?')) return 'Good question! Can you be more specific? 🤔';
+    if (lower.length < 3) return 'Hey! Ask me anything about our reptiles. 💬';
+    return 'Thanks! I\'ll help as soon as I can. 😊';
+  }
+
+  function addChatMessage(text, sender = 'user') {
+    const div = document.createElement('div');
+    div.className = `chat-message ${sender}`;
+    const time = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    div.innerHTML = `${text}<span class="time">${time}</span>`;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  async function sendMessage() {
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+
+    addChatMessage(msg, 'user');
+    chatInput.value = '';
+    chatSend.disabled = true;
+    chatSend.textContent = '⏳';
+
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'chat-typing';
+    typingDiv.textContent = 'Typing...';
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    await new Promise(resolve => setTimeout(resolve, 400 + Math.random() * 500));
+
+    typingDiv.remove();
+    addChatMessage(getAIResponse(msg), 'bot');
+
+    chatSend.disabled = false;
+    chatSend.textContent = 'Send';
+  }
+
+  chatToggle.addEventListener('click', () => chatPanel.classList.toggle('show'));
+  chatClose.addEventListener('click', () => chatPanel.classList.remove('show'));
+  chatSend.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+  // ============================================
+  // ANCHOR LINKS
+  // ============================================
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', (e) => {
+      const href = anchor.getAttribute('href');
+      if (href && href !== '#') {
+        e.preventDefault();
+        const target = document.querySelector(href);
+        if (target) {
+          if (lenisInstance) {
+            lenisInstance.scrollTo(target, { offset: 0, duration: 0.6 });
+          } else {
+            target.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      }
+    });
+  });
+
+  // ============================================
+  // Cart link (icon di navbar) buka panel cart
+  // ============================================
+  document.querySelectorAll('.cart-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleCart();
+    });
+  });
+
+  // ============================================
+  // INIT SISANYA
+  // ============================================
+  const user = localStorage.getItem('klikva_user');
+  const mobileNavBtns = document.getElementById('mobileNavBtns');
+  if (user && mobileNavBtns) {
+    mobileNavBtns.innerHTML = `
+      <a href="dashboard.html" class="btn-solid">Dashboard</a>
+      <a href="logout.html" class="btn-ghost">Keluar</a>
+    `;
+  }
+    // ============================================
+  // NAVBAR TRANSPARAN → SOLID
+  // Toggle class .nav-solid saat scroll melewati 80px
+  // ============================================
+  (function initNavbarTransparency() {
+    const navbar = document.getElementById('navbar');
+    if (!navbar) return;
+
+    const THRESHOLD = 80;   // px — kapan navbar jadi solid
+    let isSolid = false;
+
+    function updateNavbar() {
+      const y = window.scrollY || window.pageYOffset || 0;
+      const shouldBeSolid = y > THRESHOLD;
+
+      if (shouldBeSolid !== isSolid) {
+        isSolid = shouldBeSolid;
+        navbar.classList.toggle('nav-solid', isSolid);
+      }
+    }
+
+    // Dengarkan scroll native — Lenis tetap update window.scrollY
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          updateNavbar();
+          ticking = false;
+        });
+      }
+    }, { passive: true });
+
+    // Cek saat load (kalau refresh di tengah halaman)
+    updateNavbar();
+
+    // Cek juga saat resize (kalau hero jadi lebih pendek di HP)
+    window.addEventListener('resize', updateNavbar);
+  })();
+    // ============================================
+  // SERVICES — WHEEL SLIDER (Arrow + Loop, tanpa wheel scroll)
+  // ============================================
+  (function initServicesWheel() {
+    const section = document.getElementById('services');
+    const stage   = document.getElementById('wheelStage');
+    const track   = document.getElementById('wheelTrack');
+    const dotsBox = document.getElementById('wheelDots');
+    const prevBtn = document.getElementById('wheelPrev');
+    const nextBtn = document.getElementById('wheelNext');
+
+    if (!section || !stage || !track) return;
+
+    const cards = Array.from(track.querySelectorAll('.wheel-card'));
+    const total = cards.length;
+    if (!total) return;
+
+    // Accent color per kartu
+    cards.forEach(card => {
+      card.style.setProperty('--card-accent', card.dataset.color || '#7EE0A1');
+    });
+
+    // Generate dots
+    const dots = cards.map((_, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'wheel-dot';
+      btn.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+      btn.addEventListener('click', () => {
+        // Cari offset terdekat dengan loop
+        let diff = i - state.index;
+        while (diff > total / 2) diff -= total;
+        while (diff < -total / 2) diff += total;
+        state.target += diff;
+        state.velocity = diff * 0.08;
+      });
+      dotsBox.appendChild(btn);
+      return btn;
+    });
+
+    // ============================================
+    // STATE
+    // ============================================
+    const state = {
+      index: 0,
+      target: 0,
+      velocity: 0,
+      isInView: true
+    };
+
+    // Metrik
+    let metrics = getMetrics();
+
+    function getMetrics() {
+      const w = cards[0].offsetWidth;
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      const gap = isMobile ? w * 1.05 : w * 1.25;
+      return { w, gap, isMobile };
+    }
+
+    // ============================================
+    // LAYOUT — loop-aware
+    // ============================================
+    function layout() {
+      const half = total / 2;
+
+      cards.forEach((card, i) => {
+        let offset = i - state.index;
+        while (offset > half) offset -= total;
+        while (offset < -half) offset += total;
+
+        const absOff = Math.abs(offset);
+
+        const scale   = Math.max(0.6, 1 - absOff * 0.16);
+        const rotateY = Math.max(-14, Math.min(14, offset * -12));
+        const opacity = Math.max(0.15, 1 - absOff * 0.28);
+        const z       = Math.round(Math.max(0, 100 - absOff * 55));
+        const x       = offset * metrics.gap;
+
+        card.style.transform =
+          'translate(-50%, -50%) translate3d(' + x.toFixed(2) + 'px, 0, 0) ' +
+          'scale(' + scale.toFixed(3) + ') ' +
+          'rotateY(' + rotateY.toFixed(2) + 'deg)';
+        card.style.opacity = opacity.toFixed(3);
+        card.style.zIndex = z;
+
+        card.classList.toggle('is-active', absOff < 0.5);
+      });
+
+      const rounded = Math.round(state.index);
+      const nearestIdx = ((rounded % total) + total) % total;
+      dots.forEach((d, i) => d.classList.toggle('is-active', i === nearestIdx));
+
+      if (cards[nearestIdx]) {
+        section.style.setProperty('--active-accent', cards[nearestIdx].dataset.color || '#7EE0A1');
+      }
+    }
+
+    // ============================================
+    // NAVIGASI
+    // ============================================
+    function goNext() {
+      state.target += 1;
+      state.velocity += 0.18;
+    }
+
+    function goPrev() {
+      state.target -= 1;
+      state.velocity -= 0.18;
+    }
+
+    // Arrow buttons
+    if (nextBtn) nextBtn.addEventListener('click', goNext);
+    if (prevBtn) prevBtn.addEventListener('click', goPrev);
+
+    // Keyboard arrow (hanya saat section terlihat)
+    function handleKey(e) {
+      if (!state.isInView) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); goNext(); }
+      if (e.key === 'ArrowLeft')  { e.preventDefault(); goPrev(); }
+    }
+    window.addEventListener('keydown', handleKey);
+
+    // ============================================
+    // INTERPOLASI (rAF loop)
+    // ============================================
+    const LERP = 0.11;
+    let lastTime = performance.now();
+    let raf = 0;
+
+    function frame(t) {
+      const dt = Math.min(0.05, (t - lastTime) / 1000);
+      lastTime = t;
+
+      if (state.isInView) {
+        const diff = state.target - state.index;
+        state.index += diff * LERP * (dt * 60);
+        state.index += state.velocity * (dt * 60);
+        state.velocity *= 0.85;
+
+        if (Math.abs(diff) < 0.005 && Math.abs(state.velocity) < 0.005) {
+          state.index = state.target;
+          state.velocity = 0;
+        }
+
+        layout();
+      }
+
+      raf = requestAnimationFrame(frame);
+    }
+
+    // ============================================
+    // OBSERVER — pause saat tidak terlihat
+    // ============================================
+    new IntersectionObserver(([entry]) => {
+      state.isInView = entry.isIntersecting;
+    }, { threshold: 0.3 }).observe(stage);
+
+    // Pause saat tab tidak aktif
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        cancelAnimationFrame(raf);
+      } else {
+        lastTime = performance.now();
+        raf = requestAnimationFrame(frame);
+      }
+    });
+
+    // Resize
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        metrics = getMetrics();
+        layout();
+      }, 150);
+    });
+
+    // Update saat ganti bahasa
+    document.querySelectorAll('.lang-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        setTimeout(() => {
+          metrics = getMetrics();
+          layout();
+        }, 100);
+      });
+    });
+
+    // ============================================
+    // START
+    // ============================================
+    layout();
+    raf = requestAnimationFrame(frame);
+  })();
+
+  console.log('✨ KLIKVA — Scroll optimized. No delay.');
+  console.log('📦 Cart:', getCart().length, 'items');
+  console.log('🌐 Current language:', currentLang);
+</script>
+</body>
+</html>

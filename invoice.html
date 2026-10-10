@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice — Klikva</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #F7F5EF;
+      font-family: 'Inter', sans-serif;
+      color: #111111;
+    }
+
+    .navbar {
+      background: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #EAEAEA;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: #111;
+      text-decoration: none;
+    }
+    .logo span { font-weight: 400; color: #6B7280; }
+
+    .invoice-container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .invoice-card {
+      background: white;
+      border-radius: 2rem;
+      padding: 2rem;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+    }
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #EAEAEA;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .invoice-title h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+    .invoice-title p {
+      color: #6B7280;
+      font-size: 0.8rem;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .status-pending { background: #FEF3C7; color: #D97706; }
+    .status-process { background: #DBEAFE; color: #2563EB; }
+    .status-shipped { background: #D1FAE5; color: #059669; }
+    .status-completed { background: #DCFCE7; color: #166534; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #EAEAEA;
+    }
+    .info-box h4 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: #6B7280;
+      margin-bottom: 0.5rem;
+    }
+    .info-box p {
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+    }
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid #EAEAEA;
+    }
+    th {
+      background: #F7F5EF;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+    .total-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #EAEAEA;
+    }
+    .total-box {
+      width: 300px;
+    }
+    .total-line {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .grand-total {
+      font-weight: 800;
+      font-size: 1.2rem;
+      border-top: 1px solid #EAEAEA;
+      padding-top: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .payment-info {
+      background: #F7F5EF;
+      border-radius: 1rem;
+      padding: 1rem;
+      margin-top: 1.5rem;
+    }
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      justify-content: center;
+    }
+    .print-btn, .back-btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+    .print-btn {
+      background: #111;
+      color: white;
+      border: none;
+    }
+    .back-btn {
+      background: white;
+      color: #111;
+      border: 1px solid #EAEAEA;
+    }
+    .back-btn:hover {
+      border-color: #111;
+    }
+
+    @media (max-width: 640px) {
+      .info-grid { grid-template-columns: 1fr; }
+      .invoice-card { padding: 1.5rem; }
+      th, td { padding: 0.5rem; font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="logo">Klikva<span>.</span></a>
+</nav>
+
+<div class="invoice-container" id="invoiceContainer">
+  <div class="invoice-card">
+    <div class="invoice-header">
+      <div class="invoice-title">
+        <h2>INVOICE</h2>
+        <p id="orderIdDisplay">Order ID: -</p>
+      </div>
+      <div id="statusBadge"></div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-box">
+        <h4>BILL TO</h4>
+        <p id="customerName">-</p>
+        <p id="customerEmail">-</p>
+        <p id="customerPhone">-</p>
+        <p id="customerAddress">-</p>
+      </div>
+      <div class="info-box">
+        <h4>ORDER DETAILS</h4>
+        <p><strong>Order Date:</strong> <span id="orderDate">-</span></p>
+        <p><strong>Payment Method:</strong> <span id="paymentMethod">-</span></p>
+        <p><strong>Courier:</strong> <span id="courierInfo">-</span></p>
+        <p><strong>Shipping:</strong> <span id="shippingInfo">-</span></p>
+      </div>
+    </div>
+
+    <table id="itemsTable">
+      <thead>
+        <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
+      </thead>
+      <tbody id="itemsBody"></tbody>
+    </table>
+
+    <div class="total-row">
+      <div class="total-box">
+        <div class="total-line"><span>Subtotal</span><span id="subtotal">Rp 0</span></div>
+        <div class="total-line"><span>Shipping</span><span id="shippingCost">Rp 0</span></div>
+        <div class="total-line" id="discountRow" style="display:none;"><span>Discount</span><span id="discountAmount">Rp 0</span></div>
+        <div class="total-line grand-total"><span>Total</span><span id="totalAmount">Rp 0</span></div>
+      </div>
+    </div>
+
+    <div class="payment-info" id="paymentInfo">
+      <!-- Payment instruction will be inserted here -->
+    </div>
+
+    <div class="btn-group">
+      <button class="print-btn" onclick="window.print()">🖨️ Print Invoice</button>
+      <a href="shop.html" class="back-btn">← Continue Shopping</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Get order data from URL parameter
+  function getOrderData() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderDataStr = urlParams.get('data');
+    if (orderDataStr) {
+      try {
+        return JSON.parse(decodeURIComponent(orderDataStr));
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  function formatRupiah(angka) {
+    return 'Rp ' + (angka || 0).toLocaleString('id-ID');
+  }
+
+  function renderInvoice() {
+    const order = getOrderData();
+    
+    if (!order) {
+      document.getElementById('invoiceContainer').innerHTML = `
+        <div class="invoice-card" style="text-align:center; padding:3rem;">
+          <h2>⚠️ Invoice Not Found</h2>
+          <p>We couldn't find the invoice you're looking for.</p>
+          <a href="shop.html" class="back-btn" style="display:inline-block; margin-top:1rem;">Back to Shop</a>
+        </div>
+      `;
+      return;
+    }
+
+    // Set order details
+    document.getElementById('orderIdDisplay').innerHTML = `Order ID: ${order.orderId || '-'}`;
+    document.getElementById('customerName').innerHTML = order.customerName || '-';
+    document.getElementById('customerEmail').innerHTML = order.customerEmail || '-';
+    document.getElementById('customerPhone').innerHTML = order.customerPhone || '-';
+    document.getElementById('customerAddress').innerHTML = `${order.shippingAddress || '-'}, ${order.shippingCity || '-'} ${order.postalCode || ''}`;
+    document.getElementById('orderDate').innerHTML = order.timestamp || '-';
+    document.getElementById('paymentMethod').innerHTML = order.paymentMethod || '-';
+    document.getElementById('courierInfo').innerHTML = `${order.courier || '-'} (${order.courierType || 'Reguler'})`;
+    document.getElementById('shippingInfo').innerHTML = formatRupiah(order.shippingCost);
+    document.getElementById('subtotal').innerHTML = formatRupiah(order.subtotal);
+    document.getElementById('shippingCost').innerHTML = formatRupiah(order.shippingCost);
+    document.getElementById('totalAmount').innerHTML = formatRupiah(order.totalAmount);
+    
+    if (order.discount && order.discount > 0) {
+      document.getElementById('discountRow').style.display = 'flex';
+      document.getElementById('discountAmount').innerHTML = formatRupiah(order.discount);
+    }
+    
+    // Status badge
+    const statusClass = {
+      'Menunggu Pembayaran': 'status-pending',
+      'Diproses': 'status-process',
+      'Dikirim': 'status-shipped',
+      'Selesai': 'status-completed'
+    };
+    const status = order.status || 'Menunggu Pembayaran';
+    document.getElementById('statusBadge').innerHTML = `<span class="status-badge ${statusClass[status] || 'status-pending'}">${status}</span>`;
+    
+    // Render items
+    let items = [];
+    try {
+      items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+    } catch (e) {
+      items = [];
+    }
+    
+    const itemsBody = document.getElementById('itemsBody');
+    itemsBody.innerHTML = items.map(item => `
+      <tr>
+        <td>${item.name || 'Product'}</td>
+        <td>${formatRupiah(item.price)}</td>
+        <td>${item.quantity || 1}</td>
+        <td>${formatRupiah((item.price || 0) * (item.quantity || 1))}</td>
+      </tr>
+    `).join('');
+    
+    // Payment instruction
+    let paymentHtml = '';
+    if (order.paymentMethod === 'Bank Transfer') {
+      paymentHtml = `
+        <h4>💳 Payment Instruction</h4>
+        <p>Please transfer to one of the following accounts:</p>
+        <p><strong>BCA:</strong> 123 456 7890 a.n. Klikva Indonesia<br>
+        <strong>Mandiri:</strong> 987 654 3210 a.n. Klikva Indonesia<br>
+        <strong>BNI:</strong> 456 789 0123 a.n. Klikva Indonesia</p>
+        <p style="font-size:0.8rem; margin-top:0.5rem;">*Upload payment proof to confirm your order</p>
+      `;
+    } else if (order.paymentMethod === 'QRIS') {
+      paymentHtml = `
+        <h4>📱 QRIS Payment</h4>
+        <p>Scan QRIS code using any banking app to complete payment</p>
+        <div style="width:150px; height:150px; background:#fff; border-radius:1rem; display:flex; align-items:center; justify-content:center; margin-top:0.5rem;">📱 QRIS CODE</div>
+      `;
+    } else {
+      paymentHtml = `
+        <h4>🚚 Cash on Delivery</h4>
+        <p>Pay in cash when the package arrives at your address</p>
+      `;
+    }
+    document.getElementById('paymentInfo').innerHTML = paymentHtml;
+  }
+
+  renderInvoice();
+</script>
+</body>
+</html>

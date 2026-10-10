@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wishlist — Klikva</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #F7F5EF; font-family: 'Inter', sans-serif; color: #111111; }
+
+    .navbar {
+      background: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #EAEAEA;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: #111;
+      text-decoration: none;
+    }
+    .logo span { font-weight: 400; color: #6B7280; }
+    .nav-icons {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      position: relative;
+    }
+    .cart-count {
+      position: absolute;
+      top: -8px;
+      right: -12px;
+      background: #111;
+      color: white;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 50%;
+    }
+    .avatar {
+      width: 36px;
+      height: 36px;
+      background: #111;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .logout-btn {
+      background: none;
+      border: 1px solid #EAEAEA;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: #6B7280;
+      margin-bottom: 2rem;
+    }
+
+    .wishlist-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+    }
+    .wishlist-card {
+      background: white;
+      border-radius: 1rem;
+      overflow: hidden;
+      border: 1px solid #EAEAEA;
+      transition: all 0.2s;
+    }
+    .wishlist-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    .product-image {
+      height: 200px;
+      background: #F7F5EF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+    }
+    .product-info {
+      padding: 1rem;
+    }
+    .product-name {
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      font-size: 0.9rem;
+      line-height: 1.3;
+    }
+    .product-price {
+      font-weight: 800;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      color: #111;
+    }
+    .add-to-cart-wishlist {
+      width: 100%;
+      background: #111;
+      color: white;
+      border: none;
+      padding: 0.5rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+    }
+    .remove-wishlist {
+      width: 100%;
+      background: none;
+      border: 1px solid #EAEAEA;
+      padding: 0.5rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .remove-wishlist:hover {
+      background: #FEE2E2;
+      border-color: #DC2626;
+      color: #DC2626;
+    }
+    .empty-wishlist {
+      text-align: center;
+      padding: 3rem;
+      color: #6B7280;
+    }
+    .empty-wishlist a {
+      color: #111;
+      font-weight: 600;
+    }
+    .toast-msg {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 2rem;
+      font-size: 0.875rem;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast-msg.show {
+      opacity: 1;
+    }
+
+    @media (max-width: 900px) {
+      .wishlist-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .wishlist-grid { grid-template-columns: 1fr; }
+      .container { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="logo">Klikva<span>.</span></a>
+  <div class="nav-icons">
+    <button class="icon-btn" onclick="window.location.href='shop.html'">🛍️</button>
+    <button class="icon-btn" onclick="window.location.href='cart.html'">
+      🛒 <span class="cart-count" id="cartCount">0</span>
+    </button>
+    <div class="avatar" id="avatarDisplay" onclick="window.location.href='dashboard.html'">👤</div>
+    <button class="logout-btn" id="logoutBtn">Keluar</button>
+  </div>
+</nav>
+
+<div class="container">
+  <h1>❤️ Wishlist Saya</h1>
+  <p class="subtitle">Produk favorit yang akan segera kamu beli</p>
+  <div class="wishlist-grid" id="wishlistGrid"></div>
+</div>
+
+<div class="toast-msg" id="toastMsg"></div>
+
+<script>
+  // ======================== STORAGE KEY ========================
+  const WISHLIST_STORAGE_KEY = 'klikva_wishlist_data';
+  
+  let currentUser = null;
+
+  function showToast(msg) {
+    const toast = document.getElementById('toastMsg');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  // Cart Functions
+  function getCart() {
+    return JSON.parse(localStorage.getItem('klikva_cart') || '[]');
+  }
+
+  function saveCart(cart) {
+    localStorage.setItem('klikva_cart', JSON.stringify(cart));
+    updateCartCount();
+  }
+
+  function updateCartCount() {
+    const cart = getCart();
+    const total = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const cartCountElem = document.getElementById('cartCount');
+    if (cartCountElem) cartCountElem.innerText = total;
+  }
+
+  function addToCart(productId, productName, productPrice, productImage) {
+    if (!currentUser) {
+      if (confirm('Anda harus login terlebih dahulu. Buka halaman login?')) {
+        window.location.href = 'login.html';
+      }
+      return;
+    }
+    
+    const cart = getCart();
+    const existing = cart.find(item => item.id === productId);
+    
+    if (existing) {
+      existing.quantity++;
+    } else {
+      cart.push({
+        id: productId,
+        name: productName,
+        price: productPrice,
+        image: productImage,
+        quantity: 1
+      });
+    }
+    
+    saveCart(cart);
+    showToast('✅ Ditambahkan ke keranjang!');
+  }
+
+  // ======================== WISHLIST FUNCTIONS (LOCAL STORAGE) ========================
+  function getWishlist() {
+    const allWishlist = JSON.parse(localStorage.getItem(WISHLIST_STORAGE_KEY) || '[]');
+    if (!currentUser) return [];
+    return allWishlist.filter(w => w.customerEmail === currentUser.email);
+  }
+
+  function saveWishlistItem(product) {
+    if (!currentUser) return false;
+    
+    const allWishlist = JSON.parse(localStorage.getItem(WISHLIST_STORAGE_KEY) || '[]');
+    const exists = allWishlist.find(w => w.customerEmail === currentUser.email && w.productId === product.id);
+    
+    if (exists) {
+      showToast('❤️ Sudah ada di wishlist');
+      return false;
+    }
+    
+    const newItem = {
+      wishlistId: `WL-${Date.now()}-${Math.random()}`,
+      customerEmail: currentUser.email,
+      customerName: currentUser.namaLengkap,
+      productId: product.id,
+      productName: product.name,
+      productPrice: product.price,
+      productImage: product.image,
+      addedAt: new Date().toLocaleString('id-ID')
+    };
+    
+    allWishlist.push(newItem);
+    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(allWishlist));
+    showToast('✅ Disimpan ke wishlist!');
+    return true;
+  }
+
+  function removeFromWishlist(wishlistId) {
+    if (!confirm('Hapus produk dari wishlist?')) return;
+    
+    const allWishlist = JSON.parse(localStorage.getItem(WISHLIST_STORAGE_KEY) || '[]');
+    const newWishlist = allWishlist.filter(w => w.wishlistId !== wishlistId);
+    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(newWishlist));
+    showToast('🗑️ Dihapus dari wishlist');
+    loadWishlist();
+  }
+
+  function loadWishlist() {
+    const grid = document.getElementById('wishlistGrid');
+    
+    if (!currentUser) {
+      grid.innerHTML = `
+        <div class="empty-wishlist" style="grid-column:1/-1;">
+          🔐 Silakan login untuk melihat wishlist.<br><br>
+          <a href="login.html">Login →</a>
+        </div>
+      `;
+      return;
+    }
+    
+    const myWishlist = getWishlist();
+    
+    if (myWishlist.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-wishlist" style="grid-column:1/-1;">
+          🛍️ Belum ada produk di wishlist.<br><br>
+          <a href="shop.html">Mulai belanja →</a>
+        </div>
+      `;
+      return;
+    }
+    
+    grid.innerHTML = myWishlist.map(w => {
+      const productNameSafe = (w.productName || 'Produk').replace(/'/g, "\\'");
+      return `
+        <div class="wishlist-card">
+          <div class="product-image">${w.productImage || '📦'}</div>
+          <div class="product-info">
+            <div class="product-name">${w.productName || 'Produk'}</div>
+            <div class="product-price">Rp ${parseInt(w.productPrice || 0).toLocaleString('id-ID')}</div>
+            <button class="add-to-cart-wishlist" onclick="addToCart(${w.productId}, '${productNameSafe}', ${w.productPrice}, '${w.productImage}')">🛒 Add to Cart</button>
+            <button class="remove-wishlist" onclick="removeFromWishlist('${w.wishlistId}')">🗑️ Hapus</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ======================== INITIALIZE ========================
+  const userData = localStorage.getItem('klikva_user');
+  if (userData) {
+    currentUser = JSON.parse(userData);
+    const initial = (currentUser.namaLengkap || 'M').charAt(0).toUpperCase();
+    document.getElementById('avatarDisplay').innerHTML = initial;
+  }
+
+  // Logout
+  document.getElementById('logoutBtn').onclick = () => {
+    localStorage.removeItem('klikva_user');
+    window.location.href = 'index.html';
+  };
+
+  // Initialize
+  loadWishlist();
+  updateCartCount();
+</script>
+</body>
+</html>
