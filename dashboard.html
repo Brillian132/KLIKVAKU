@@ -299,9 +299,7 @@ select.order-picker{color:var(--ink);padding:.5rem .9rem;border:1px solid var(--
 
 <div class="toast-msg" id="toastMsg"></div>
 
-<!-- ============================================
-     MODAL AVATAR PICKER
-     ============================================ -->
+<!-- MODAL AVATAR PICKER -->
 <div class="avatar-modal-overlay" id="avatarModal">
   <div class="avatar-modal">
     <button class="avatar-modal-close" onclick="closeAvatarPicker()" aria-label="Tutup">✕</button>
@@ -321,7 +319,12 @@ select.order-picker{color:var(--ink);padding:.5rem .9rem;border:1px solid var(--
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+/* =====================================================================
+   ⚠️ GANTI URL DI BAWAH INI dengan URL Apps Script Orders kamu
+   (sama dengan yang di checkout.html)
+===================================================================== */
 const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbxmwYJCnVjqFKD_dMhYsEkxKP4kR4gWyHXUcYXwpMwo990-L2bzgKzGQa5BCBCbd0Tk2w/exec';
+
 const STORE_COORD = { lat: -6.2088, lng: 106.8456 };
 const CITY_COORDS = {
   'Jakarta':[-6.2088,106.8456],'Surabaya':[-7.2575,112.7521],'Bandung':[-6.9175,107.6191],'Yogyakarta':[-7.7956,110.3695],
@@ -389,8 +392,6 @@ let selectedAvatar = null;
 
 function renderAvatar() {
   const initial = (user.namaLengkap || 'M').charAt(0).toUpperCase();
-  
-  // Navbar avatar
   const nav = $('avatarNav');
   if (nav) {
     if (currentAvatar) {
@@ -399,8 +400,6 @@ function renderAvatar() {
       nav.textContent = initial;
     }
   }
-  
-  // Hero avatar
   const hero = $('avatarHero');
   if (hero) {
     if (currentAvatar) {
@@ -572,13 +571,10 @@ function hideAvatarToast() {
   if (t) t.className = 'avatar-toast';
 }
 
-// Klik overlay untuk tutup
 document.addEventListener('click', (e) => {
   const modal = $('avatarModal');
   if (modal && modal.classList.contains('show') && e.target === modal) closeAvatarPicker();
 });
-
-// ESC untuk tutup
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const modal = $('avatarModal');
@@ -601,7 +597,6 @@ document.addEventListener('keydown', (e) => {
   });
 })();
 
-// Klik avatar navbar
 document.addEventListener('DOMContentLoaded', () => {
   const nav = $('avatarNav');
   if (nav) nav.addEventListener('click', openAvatarPicker);
@@ -626,9 +621,9 @@ function renderTimeline(order) {
   $('timelineSteps').innerHTML = STATUS_STEPS.map((s, i) => `
     <div class="t-step ${i<stepIdx?'done':''} ${i===stepIdx?'active':''}">
       <div class="t-icon">${i<stepIdx?'✓':s.icon}</div>
-      <div><div class="t-label">${s.label}</div>${i===stepIdx && order.timestamp ? `<div class="t-date">${esc(order.timestamp.split(' ')[0])}</div>` : ''}</div>
+      <div><div class="t-label">${s.label}</div>${i===stepIdx && order.timestamp ? `<div class="t-date">${esc(String(order.timestamp).split(' ')[0])}</div>` : ''}</div>
     </div>`).join('');
-  const hasResi = order.resi && order.resi.trim() !== '';
+  const hasResi = order.resi && String(order.resi).trim() !== '';
   if (hasResi) {
     $('resiKode').textContent = order.resi;
     $('resiKurir').textContent = `Kurir: ${order.courier || 'Belum ditentukan'}`;
@@ -672,20 +667,86 @@ function initMap() {
   mapInstance.fitBounds(line.getBounds(), { padding:[40,40] });
 }
 
-async function loadOrders() {
-  try {
-    const res = await fetch(ORDERS_API_URL);
-    const data = await res.json();
-    const myOrders = (Array.isArray(data) ? data : [])
-      .filter(o => o.customerEmail && o.customerEmail.toLowerCase() === (user.email || '').toLowerCase());
-    const prio = { 'Menunggu Pembayaran':1, 'Diproses':2, 'Dikirim':3, 'Selesai':4 };
+/* =====================================================================
+   LOAD ORDERS dari Apps Script (via JSONP)
+===================================================================== */
+function fetchOrdersJSONP(email, cb) {
+  const cbName = 'klikva_orders_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+  const script = document.createElement('script');
+  let done = false;
+
+  const cleanup = () => {
+    if (done) return;
+    done = true;
+    try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+    if (script.parentNode) script.parentNode.removeChild(script);
+  };
+
+  window[cbName] = (data) => { cleanup(); cb(null, data); };
+
+  const timer = setTimeout(() => { cleanup(); cb(new Error('Timeout')); }, 15000);
+
+  const url = new URL(ORDERS_API_URL);
+  url.searchParams.append('action', 'getOrders');
+  url.searchParams.append('email', email || '');
+  url.searchParams.append('callback', cbName);
+  script.src = url.toString();
+  script.onerror = () => { clearTimeout(timer); cleanup(); cb(new Error('Network')); };
+  script.onload = () => clearTimeout(timer);
+  document.body.appendChild(script);
+}
+
+function normalizeOrder(o) {
+  return {
+    orderId: o.OrderID || o.orderId || '—',
+    timestamp: o.Timestamp || o.timestamp || '',
+    customerName: o.Nama || o.customerName || '',
+    customerEmail: o.Email || o.customerEmail || '',
+    customerPhone: o.Telepon || o.customerPhone || '',
+    shippingAddress: o.Alamat || o.shippingAddress || '',
+    shippingDistrict: o.Kecamatan || '',
+    shippingCity: o.Kota || o.shippingCity || '',
+    postalCode: o.KodePos || '',
+    notes: o.Catatan || '',
+    courier: o.Kurir || o.courier || '',
+    courierType: o.LayananKurir || '',
+    paymentMethod: o.MetodeBayar || o.paymentMethod || '',
+    promo: o.Promo || '',
+    subtotal: Number(o.Subtotal) || 0,
+    shippingCost: Number(o.Ongkir) || 0,
+    discount: Number(o.Diskon) || 0,
+    totalAmount: Number(o.Total) || 0,
+    items: (() => { try { return typeof o.Items === 'string' ? JSON.parse(o.Items) : (o.Items || []); } catch (e) { return []; } })(),
+    status: o.Status || o.status || 'Menunggu Pembayaran',
+    resi: o.Resi || o.resi || '',
+    proofUrl: o.BuktiURL || ''
+  };
+}
+
+function loadOrders() {
+  $('orderHistoryList').innerHTML = '<div class="empty">Memuat pesanan…</div>';
+
+  fetchOrdersJSONP(user.email, (err, res) => {
+    if (err || !res || !res.success) {
+      console.error('Load orders error:', err, res);
+      $('orderHistoryList').innerHTML = '<div class="empty">Gagal memuat pesanan.<br><br><a href="#" onclick="loadOrders();return false;">Coba lagi</a></div>';
+      return;
+    }
+
+    const rawOrders = Array.isArray(res.data) ? res.data : [];
+    const myOrders = rawOrders.map(normalizeOrder);
+
+    const prio = { 'Menunggu Pembayaran':1, 'Menunggu Konfirmasi':1, 'Menunggu Verifikasi':1, 'Diproses':2, 'Dikirim':3, 'Selesai':4 };
     myOrders.sort((a, b) => {
       const pa = prio[a.status] || 5, pb = prio[b.status] || 5;
       return pa !== pb ? pa - pb : new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
     });
+
     allOrders = myOrders;
+
     $('statOrders').textContent = allOrders.length;
     $('statSpend').textContent = rp(allOrders.reduce((s, o) => s + (Number(o.totalAmount) || 0), 0));
+
     const count = k => allOrders.filter(o => normalizeStatus(o.status) === k).length;
     $('cWait').textContent = count('Menunggu Pembayaran');
     $('cProc').textContent = count('Diproses');
@@ -694,30 +755,49 @@ async function loadOrders() {
 
     if (!allOrders.length) {
       $('orderHistoryList').innerHTML = '<div class="empty">Belum ada pesanan.<br><br><a href="shop.html">Mulai belanja</a></div>';
+      $('trackingCard').style.display = 'none';
       return;
     }
-    $('orderPicker').innerHTML = allOrders.map(o => `<option value="${esc(o.orderId)}">${esc(o.orderId)} — ${esc(o.status || 'Menunggu')}</option>`).join('');
+
+    $('orderPicker').innerHTML = allOrders.map(o =>
+      `<option value="${esc(o.orderId)}">${esc(o.orderId)} — ${esc(o.status)}</option>`
+    ).join('');
     $('orderPicker').onchange = e => selectOrder(e.target.value);
+
     $('orderHistoryList').innerHTML = allOrders.map(o => `
       <div class="order-card" data-id="${esc(o.orderId)}" onclick="selectOrder('${esc(o.orderId)}')">
-        <div><div class="order-id">${esc(o.orderId)}</div>
-          <div class="order-meta">${o.timestamp ? esc(o.timestamp.split(' ')[0]) : '—'} · ${esc(o.paymentMethod || '—')}</div>
-          ${o.resi ? `<div class="resi-tag">Resi: ${esc(o.resi)}</div>` : ''}</div>
-        <div class="order-right"><div class="order-total">${rp(o.totalAmount)}</div><span class="status-badge ${statusClass(o.status)}">${esc(o.status || 'Menunggu')}</span></div>
+        <div>
+          <div class="order-id">${esc(o.orderId)}</div>
+          <div class="order-meta">${o.timestamp ? esc(String(o.timestamp).split(' ')[0]) : '—'} · ${esc(o.paymentMethod || '—')}</div>
+          ${o.resi ? `<div class="resi-tag">Resi: ${esc(o.resi)}</div>` : ''}
+        </div>
+        <div class="order-right">
+          <div class="order-total">${rp(o.totalAmount)}</div>
+          <span class="status-badge ${statusClass(o.status)}">${esc(o.status)}</span>
+        </div>
       </div>`).join('');
+
     $('trackingCard').style.display = 'block';
-    selectOrder((allOrders.find(o => o.resi && normalizeStatus(o.status) === 'Dikirim') || allOrders.find(o => o.resi) || allOrders[0]).orderId);
-  } catch (e) {
-    console.error(e);
-    $('orderHistoryList').innerHTML = '<div class="empty">Gagal memuat pesanan. Muat ulang halaman untuk mencoba lagi.</div>';
-  }
+
+    const firstSelect = myOrders.find(o => o.resi && normalizeStatus(o.status) === 'Dikirim')
+                     || myOrders.find(o => o.resi)
+                     || myOrders[0];
+    if (firstSelect) selectOrder(firstSelect.orderId);
+  });
 }
 
 $('logoutBtn').onclick = () => { localStorage.removeItem('klikva_user'); location.href = 'index.html'; };
-window.selectOrder = selectOrder; window.trackViaCourier = trackViaCourier; window.toggleMap = toggleMap;
-window.openAvatarPicker = openAvatarPicker; window.closeAvatarPicker = closeAvatarPicker;
-window.selectAvatar = selectAvatar; window.saveAvatar = saveAvatar;
+window.selectOrder = selectOrder;
+window.trackViaCourier = trackViaCourier;
+window.toggleMap = toggleMap;
+window.openAvatarPicker = openAvatarPicker;
+window.closeAvatarPicker = closeAvatarPicker;
+window.selectAvatar = selectAvatar;
+window.saveAvatar = saveAvatar;
+window.loadOrders = loadOrders;
+
 loadOrders();
+setInterval(() => { if (!document.hidden) loadOrders(); }, 30000);
 </script>
 </body>
 </html>
