@@ -3,667 +3,856 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Keranjang — Klikva</title>
-<link rel="icon" type="image/png" href="logo-klikva.png">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Checkout — Klikva</title>
+<link rel="icon" type="image/png" href="favicon-klikva.png">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#FAF9F6;--bg-card:#fff;--text:#1A1A1A;--text-secondary:#555;--text-light:#999;--border:#E8E6E1;--shadow-hover:0 12px 40px rgba(0,0,0,.08);--radius:20px;--font:'Space Grotesk',sans-serif;--nav-bg:rgba(255,255,255,.88);--danger:#DC2626;--warning:#D97706;--success:#059669}
-[data-theme="dark"]{--bg:#121212;--bg-card:#1E1E1E;--text:#EDEDED;--text-secondary:#AAA;--text-light:#777;--border:#2A2A2A;--shadow-hover:0 12px 40px rgba(0,0,0,.3);--nav-bg:rgba(18,18,18,.92)}
-body{font-family:var(--font);background:var(--bg);color:var(--text);transition:background .3s,color .3s;overflow-x:hidden}
-a{text-decoration:none;color:inherit}button{font-family:var(--font);cursor:pointer;border:none;background:none;color:inherit}ul{list-style:none}
+:root{--bg:#FAF9F6;--bg-card:#fff;--text:#1A1A1A;--text-secondary:#555;--muted:#6B6B6B;--border:#E8E6E1;--shadow-hover:0 12px 40px rgba(0,0,0,.08);--radius:20px;--font:'Space Grotesk',sans-serif;--nav-bg:rgba(255,255,255,.88);--ok:#059669;--warn:#B45309;--bad:#DC2626}
+[data-theme="dark"]{--bg:#121212;--bg-card:#1E1E1E;--text:#EDEDED;--text-secondary:#AAA;--muted:#A0A0A0;--border:#2A2A2A;--shadow-hover:0 12px 40px rgba(0,0,0,.3);--nav-bg:rgba(18,18,18,.92);--ok:#34D399;--warn:#FBBF24;--bad:#F87171}
+body{font-family:var(--font);background:var(--bg);color:var(--text);transition:background .3s,color .3s;-webkit-font-smoothing:antialiased;min-height:100vh}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+[hidden]{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-/* NAVBAR */
-#navbar{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 24px;background:var(--nav-bg);backdrop-filter:blur(20px);box-shadow:0 1px 0 var(--border)}
-.nav-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:68px}
+/* NAV */
+.nav{position:sticky;top:0;z-index:50;background:var(--nav-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 1px 0 var(--border)}
+.nav-inner{max-width:1180px;margin:0 auto;padding:0 24px;height:68px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .nav-logo{display:flex;align-items:center;gap:8px;font-size:1.25rem;font-weight:800;letter-spacing:-.04em}
-.nav-logo-img{width:26px;height:26px;object-fit:contain}
-.nav-actions{display:flex;align-items:center;gap:12px}
+.nav-logo-img{width:26px;height:26px;object-fit:contain;filter:invert(1);transition:filter .3s}
+[data-theme="dark"] .nav-logo-img{filter:none}
+.nav-right{display:flex;align-items:center;gap:10px}
+.back-link{font-size:.85rem;font-weight:500;color:var(--text-secondary);padding:8px 4px}
+.back-link:hover{color:var(--text)}
 .lang-switcher{display:flex;gap:4px}
-.lang-btn{border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:.7rem;font-weight:500;color:var(--text-secondary);background:transparent}
+.lang-btn{border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:.7rem;font-weight:500;color:var(--text-secondary)}
 .lang-btn.active{background:var(--text);border-color:var(--text);color:var(--bg)}
-.avatar-nav{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px 4px 4px;border-radius:50px;transition:background .2s}
-.avatar-nav:hover{background:var(--bg)}
-.avatar-nav-image{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;background:var(--bg);overflow:hidden;font-weight:700;color:var(--text)}
-.avatar-nav-image img{width:100%;height:100%;object-fit:cover;display:block}
-.avatar-nav-name{font-size:.8rem;font-weight:500;max-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cart-link{position:relative;padding:8px;font-size:1.4rem;transition:transform .2s}
-.cart-link:hover{transform:scale(1.1)}
-.cart-badge{position:absolute;top:0;right:0;background:#ef4444;color:#fff;font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:50%;min-width:18px;text-align:center}
-.btn-ghost{font-size:.875rem;font-weight:500;padding:9px 18px;border-radius:50px;border:1.5px solid var(--border);transition:border-color .2s,background .2s;color:var(--text)}
+.theme-btn{border:1.5px solid var(--border);border-radius:50px;padding:6px 12px;font-size:.95rem}
+.theme-btn:hover{border-color:var(--text)}
+.avatar{width:34px;height:34px;border-radius:50%;border:2px solid var(--border);display:grid;place-items:center;font-size:.8rem;font-weight:700;background:var(--bg-card)}
+
+/* LAYOUT */
+.wrap{max-width:1180px;margin:0 auto;padding:36px 24px 72px}
+.page-head{margin-bottom:24px}
+.page-head h1{font-size:clamp(1.6rem,3vw,2.1rem);font-weight:700;letter-spacing:-.02em}
+.page-head p{color:var(--text-secondary);margin-top:6px;font-size:.95rem}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:28px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:20px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.step-n{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--text);display:grid;place-items:center;font-size:.75rem;font-weight:700;flex-shrink:0}
+.card-head h2{font-size:1.05rem;font-weight:700;letter-spacing:-.01em}
+
+/* FORM */
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:.78rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px}
+.field input,.field textarea{width:100%;padding:12px 14px;background:var(--bg-card);color:var(--text);border:1.5px solid var(--border);border-radius:14px;font-size:.92rem;transition:border-color .2s,box-shadow .2s}
+.field textarea{resize:vertical;min-height:84px}
+.field input::placeholder,.field textarea::placeholder{color:var(--muted);opacity:.7}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--text);box-shadow:0 0 0 3px color-mix(in srgb,var(--text) 12%,transparent)}
+.field input[aria-invalid="true"],.field textarea[aria-invalid="true"]{border-color:var(--bad)}
+.err{color:var(--bad);font-size:.75rem;margin-top:5px;font-weight:500}
+
+/* OPTION CARDS */
+fieldset{border:0;min-width:0}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1.5px solid var(--border);border-radius:16px;cursor:pointer;transition:border-color .2s,background .2s}
+.opt:hover{border-color:var(--text)}
+.opt.selected{border-color:var(--text);background:var(--bg)}
+.opt input{width:18px;height:18px;accent-color:var(--text);flex-shrink:0}
+.opt-main{flex:1;min-width:0}
+.opt-main b{display:block;font-size:.92rem}
+.opt-main small{display:block;font-size:.76rem;color:var(--muted);margin-top:2px}
+.opt-price{font-weight:700;font-size:.9rem;white-space:nowrap}
+.seg{display:inline-flex;padding:4px;border:1.5px solid var(--border);border-radius:999px;margin-bottom:14px;gap:2px}
+.seg label{position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.seg span{display:block;padding:7px 16px;border-radius:999px;font-size:.82rem;font-weight:600;color:var(--text-secondary);transition:background .2s,color .2s}
+.seg input:checked+span{background:var(--text);color:var(--bg)}
+.seg input:focus-visible+span{outline:2px solid var(--text);outline-offset:2px}
+.sub-label{font-size:.78rem;font-weight:600;color:var(--text-secondary);margin-bottom:8px;display:block}
+
+/* PAYMENT PANEL */
+.pay-panel{margin-top:14px;padding:16px;border-radius:16px;background:var(--bg);border:1px solid var(--border);font-size:.88rem}
+.pay-panel p{color:var(--text-secondary);line-height:1.55}
+.acct{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.acct:last-of-type{border-bottom:0}
+.acct b{font-size:.85rem}
+.acct .num{font-size:1.05rem;font-weight:700;letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.acct small{display:block;color:var(--muted);font-size:.74rem}
+.copy-btn{border:1.5px solid var(--border);border-radius:999px;padding:5px 12px;font-size:.74rem;font-weight:600;flex-shrink:0}
+.copy-btn:hover{border-color:var(--text)}
+.qris-img{display:block;width:200px;max-width:100%;border-radius:14px;margin:0 auto 10px;border:1px solid var(--border);background:#fff}
+
+/* SUMMARY */
+.summary{position:sticky;top:92px}
+.summary h2{font-size:1.05rem;font-weight:700;margin-bottom:16px}
+.items{max-height:320px;overflow-y:auto;margin:0 -6px 14px;padding:0 6px}
+.line{display:grid;grid-template-columns:56px 1fr auto;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);align-items:start}
+.line:last-child{border-bottom:0}
+.thumb{width:56px;height:56px;border-radius:14px;background:var(--bg);display:grid;place-items:center;font-size:1.7rem;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:contain}
+.line-name{font-size:.86rem;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.line-meta{font-size:.76rem;color:var(--muted);margin-top:3px}
+.line-price{font-size:.86rem;font-weight:700;white-space:nowrap}
+.tag{display:inline-block;margin-top:5px;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:999px}
+.tag.bad{color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent)}
+.tag.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.tag-btn{margin-left:6px;font-size:.72rem;font-weight:600;text-decoration:underline;color:var(--text-secondary)}
+.line.is-bad .thumb{opacity:.55}
+.promo{display:flex;gap:8px;margin-bottom:6px}
+.promo input{flex:1;min-width:0;padding:10px 14px;border:1.5px solid var(--border);border-radius:999px;background:var(--bg-card);color:var(--text);font-size:.85rem;text-transform:uppercase}
+.promo input::placeholder{text-transform:none;color:var(--muted);opacity:.7}
+.promo input:focus{outline:none;border-color:var(--text)}
+.promo-msg{font-size:.76rem;min-height:1.1rem;margin:2px 0 12px 4px;font-weight:500}
+.promo-msg.ok{color:var(--ok)}.promo-msg.bad{color:var(--bad)}
+.totals{border-top:1px solid var(--border);padding-top:14px}
+.t-row{display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:10px;color:var(--text-secondary)}
+.t-row.disc span:last-child{color:var(--ok);font-weight:600}
+.t-row.total{font-size:1.15rem;font-weight:700;color:var(--text);border-top:1px solid var(--border);padding-top:14px;margin:14px 0 0}
+.hint{font-size:.78rem;color:var(--bad);text-align:center;margin-top:10px;min-height:1.1rem;font-weight:500}
+.edit-cart{display:block;text-align:center;margin-top:10px;font-size:.82rem;color:var(--text-secondary);text-decoration:underline}
+
+/* BUTTONS */
+.btn-solid{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:.92rem;font-weight:600;color:var(--bg);padding:13px 24px;border-radius:50px;background:var(--text);transition:opacity .2s,transform .2s}
+.btn-solid:hover:not(:disabled){opacity:.85;transform:scale(1.02)}
+.btn-solid:disabled{opacity:.4;cursor:not-allowed}
+.btn-solid.block{width:100%}
+.btn-ghost{display:inline-flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:500;padding:12px 22px;border-radius:50px;border:1.5px solid var(--border);transition:border-color .2s}
 .btn-ghost:hover{border-color:var(--text)}
-.btn-solid{font-size:.875rem;font-weight:600;color:var(--bg);padding:9px 20px;border-radius:50px;background:var(--text);transition:opacity .2s,transform .2s}
-.btn-solid:hover{opacity:.8;transform:scale(1.03)}
-
-/* CONTAINER */
-.cart-container{max-width:1400px;margin:0 auto;padding:100px 24px 40px}
-.cart-header{margin-bottom:2rem}
-.cart-header h1{font-size:clamp(1.8rem,3vw,2.4rem);font-weight:800;letter-spacing:-.02em}
-.cart-header p{color:var(--text-secondary);margin-top:.5rem;font-size:.9rem}
-
-/* GRID */
-.cart-grid{display:grid;grid-template-columns:1fr 380px;gap:2rem}
-
-/* CART ITEMS */
-.cart-items{background:var(--bg-card);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
-.cart-item{display:grid;grid-template-columns:100px 1fr auto;gap:1rem;padding:1.5rem;border-bottom:1px solid var(--border);align-items:center;transition:background .2s}
-.cart-item:last-child{border-bottom:none}
-.cart-item.out-of-stock{background:rgba(220,38,38,.04)}
-[data-theme="dark"] .cart-item.out-of-stock{background:rgba(220,38,38,.08)}
-.cart-item.removed-product{opacity:.6;background:rgba(107,114,128,.05)}
-
-.cart-item-image{width:80px;height:80px;background:var(--bg);border-radius:1rem;display:flex;align-items:center;justify-content:center;font-size:2.5rem;position:relative;overflow:hidden}
-.cart-item-image img{width:100%;height:100%;object-fit:contain}
-
-.stock-badge{position:absolute;top:-6px;right:-6px;background:var(--danger);color:white;font-size:.6rem;font-weight:700;padding:.2rem .4rem;border-radius:.4rem;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
-.stock-badge.low{background:var(--warning)}
-.stock-badge.removed{background:#6B7280}
-
-.cart-item-info h3{font-size:1rem;font-weight:700;margin-bottom:.25rem}
-.cart-item-category{font-size:.7rem;color:var(--text-light);text-transform:uppercase;margin-bottom:.5rem;letter-spacing:.06em}
-.cart-item-price{font-weight:800;font-size:1rem}
-
-.stock-warning-text{font-size:.75rem;margin-top:.35rem;font-weight:600}
-.stock-warning-text.out{color:var(--danger)}
-.stock-warning-text.low{color:var(--warning)}
-.stock-warning-text.ok{color:var(--success)}
-.stock-warning-text.removed{color:var(--text-light)}
-
-.cart-item-actions{display:flex;align-items:center;gap:1rem}
-.quantity-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-size:1rem;transition:all .2s}
-.quantity-btn:hover:not(:disabled){background:var(--text);color:var(--bg);border-color:var(--text)}
-.quantity-btn:disabled{opacity:.35;cursor:not-allowed}
-.item-quantity{font-weight:600;min-width:30px;text-align:center}
-.remove-btn{background:none;border:none;color:var(--danger);cursor:pointer;font-size:.8rem;padding:.25rem .5rem;border-radius:.5rem;transition:all .2s}
-.remove-btn:hover{background:rgba(220,38,38,.1)}
-
-.stock-alert-banner{display:flex;align-items:flex-start;gap:.75rem;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);border-radius:.875rem;padding:.875rem 1rem;margin-bottom:1rem;font-size:.8rem;color:var(--danger);line-height:1.5}
-.stock-low-banner{display:flex;align-items:flex-start;gap:.75rem;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.25);border-radius:.875rem;padding:.875rem 1rem;margin-bottom:1rem;font-size:.8rem;color:var(--warning);line-height:1.5}
-.stock-alert-banner .alert-icon,.stock-low-banner .alert-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px}
-.stock-alert-banner strong,.stock-low-banner strong{display:block;font-weight:700;margin-bottom:.2rem}
-
-.cart-summary{background:var(--bg-card);border-radius:var(--radius);padding:1.5rem;border:1px solid var(--border);position:sticky;top:100px}
-.cart-summary h3{font-size:1.25rem;font-weight:700;margin-bottom:1.5rem}
-.summary-row{display:flex;justify-content:space-between;margin-bottom:1rem;font-size:.875rem}
-.summary-row.total{font-weight:800;font-size:1.1rem;border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem}
-
-.checkout-btn{width:100%;background:var(--text);color:var(--bg);border:none;padding:1rem;border-radius:2rem;font-weight:700;font-size:1rem;cursor:pointer;transition:all .2s;margin-top:1rem}
-.checkout-btn:hover:not(:disabled){opacity:.85;transform:scale(1.02)}
-.checkout-btn:disabled{background:#9CA3AF;cursor:not-allowed;transform:none;opacity:1;color:#fff}
-
-.checkout-hint{font-size:.75rem;color:var(--danger);text-align:center;margin-top:.5rem;font-weight:500;min-height:1.1rem}
-.continue-shop{display:block;text-align:center;margin-top:.75rem;color:var(--text-light);text-decoration:none;font-size:.875rem;transition:color .2s}
-.continue-shop:hover{color:var(--text)}
-
-.empty-cart{text-align:center;padding:4rem;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border)}
-.empty-cart .icon{font-size:4rem;margin-bottom:1rem}
-.empty-cart h3{font-size:1.5rem;margin-bottom:.5rem}
-.empty-cart p{color:var(--text-secondary);margin-bottom:1.5rem}
-.shop-now-btn{background:var(--text);color:var(--bg);padding:.75rem 2rem;border-radius:2rem;text-decoration:none;font-weight:600;display:inline-block;transition:opacity .2s}
-.shop-now-btn:hover{opacity:.85}
-
-.loading-state{text-align:center;padding:4rem;color:var(--text-light)}
-.loading-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .8s linear infinite}
+.spin{width:14px;height:14px;border:2px solid color-mix(in srgb,var(--bg) 35%,transparent);border-top-color:var(--bg);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* FOOTER */
-footer{background:var(--bg-card);padding:3rem 2rem 2rem;border-top:1px solid var(--border);margin-top:2rem}
-.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:2rem;max-width:1400px;margin:0 auto}
-.footer-col h4{margin-bottom:1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-secondary)}
-.footer-col a{display:block;color:var(--text-light);text-decoration:none;margin-bottom:.5rem;font-size:.85rem;transition:color .2s}
-.footer-col a:hover{color:var(--text)}
-.footer-col p{color:var(--text-secondary);font-size:.85rem;line-height:1.6;max-width:320px}
-.footer-bottom{text-align:center;padding-top:2rem;margin-top:2rem;border-top:1px solid var(--border);color:var(--text-light);font-size:.75rem;max-width:1400px;margin-left:auto;margin-right:auto}
+/* BANNERS */
+.banner{display:flex;gap:12px;padding:14px 16px;border-radius:16px;border:1px solid;margin-bottom:20px;font-size:.86rem;line-height:1.5}
+.banner.bad{border-color:color-mix(in srgb,var(--bad) 40%,transparent);background:color-mix(in srgb,var(--bad) 8%,var(--bg-card))}
+.banner.warn{border-color:color-mix(in srgb,var(--warn) 40%,transparent);background:color-mix(in srgb,var(--warn) 8%,var(--bg-card))}
+.banner b{display:block;margin-bottom:4px}
+.banner.bad b{color:var(--bad)}.banner.warn b{color:var(--warn)}
+.banner ul{padding-left:18px}
+.banner a{display:inline-block;margin-top:8px;font-weight:600;text-decoration:underline}
 
-@media(max-width:900px){.cart-grid{grid-template-columns:1fr}.cart-item{grid-template-columns:1fr;text-align:center;gap:1rem}.cart-item-actions{justify-content:center}.footer-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:640px){.cart-container{padding:80px 16px 40px}.footer-grid{grid-template-columns:1fr}}
+/* STATES */
+.state{max-width:520px;margin:60px auto;text-align:center}
+.state h2{font-size:1.5rem;font-weight:700;margin-bottom:8px}
+.state p{color:var(--text-secondary);margin-bottom:22px}
+.sk{display:block;height:14px;border-radius:8px;background:linear-gradient(90deg,var(--border),color-mix(in srgb,var(--border) 45%,transparent),var(--border));background-size:200% 100%;animation:sk 1.2s linear infinite}
+@keyframes sk{to{background-position:-200% 0}}
+.sk-line{display:grid;grid-template-columns:56px 1fr;gap:12px;padding:12px 0}
+.sk-line .sk:first-child{height:56px;border-radius:14px}
+
+/* SUCCESS */
+.ok-wrap{max-width:680px;margin:0 auto}
+.ok-head{text-align:center;margin-bottom:26px}
+.ok-icon{width:64px;height:64px;border-radius:50%;background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok);display:grid;place-items:center;margin:0 auto 16px}
+.ok-head h1{font-size:1.7rem;font-weight:700;letter-spacing:-.02em}
+.ok-head p{color:var(--text-secondary);margin-top:8px;font-size:.95rem}
+.kv{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid var(--border);font-size:.9rem}
+.kv:last-child{border-bottom:0}
+.kv span:first-child{color:var(--text-secondary)}
+.kv b{font-weight:700;text-align:right}
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:.76rem;font-weight:700;color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.chip.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.upload{border:2px dashed var(--border);border-radius:16px;padding:18px;text-align:center;margin-top:12px}
+.upload img{max-width:100%;max-height:200px;border-radius:12px;margin:10px auto 0;display:block}
+.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:22px}
+.wa{background:#25D366;color:#fff}
+.wa:hover{opacity:.9}
+
+/* MOBILE BAR + TOAST */
+.mbar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--nav-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:12px 16px;align-items:center;justify-content:space-between;gap:14px}
+.mbar small{display:block;font-size:.72rem;color:var(--muted)}
+.mbar b{font-size:1.05rem}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#111;color:#fff;padding:13px 24px;border-radius:50px;font-size:.88rem;font-weight:500;z-index:9999;opacity:0;transition:all .45s cubic-bezier(.68,-.55,.265,1.55);pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,.2);max-width:calc(100vw - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.toast.ok{background:#059669}.toast.warn{background:#B45309}.toast.bad{background:#DC2626}
+
+@media(max-width:960px){
+  .grid{grid-template-columns:1fr}
+  .summary{position:static}
+  .mbar{display:flex}
+  .wrap{padding-bottom:110px}
+  .btn-desktop{display:none}
+  .toast{bottom:92px}
+}
+@media(max-width:560px){
+  .row{grid-template-columns:1fr}
+  .card{padding:22px 18px}
+  .back-link{display:none}
+  .nav-inner{padding:0 16px}
+  .wrap{padding-left:16px;padding-right:16px}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
 
-<nav id="navbar">
-  <div class="nav-inner">
-    <a href="index.html" class="nav-logo"><img src="logo-klikva.png" alt="Klikva" class="nav-logo-img">Klikva</a>
-    <div class="nav-actions">
-      <div class="lang-switcher">
-        <button class="lang-btn active" data-lang="id">ID</button>
-        <button class="lang-btn" data-lang="en">EN</button>
-      </div>
-      <div id="navAvatarContainer"></div>
-      <a href="shop.html" class="btn-ghost" id="navShop">Belanja</a>
-      <a href="cart.html" class="cart-link">🛒<span class="cart-badge" id="cartCount">0</span></a>
-      <a href="registerd.html" class="btn-solid" id="loginBtn">Masuk</a>
-    </div>
+<nav class="nav"><div class="nav-inner">
+  <a href="index.html" class="nav-logo"><img src="logo-klikva.png" alt="" class="nav-logo-img">Klikva</a>
+  <div class="nav-right">
+    <a href="cart.html" class="back-link" data-i18n="back_cart">← Keranjang</a>
+    <div class="lang-switcher"><button type="button" class="lang-btn active" data-lang="id">ID</button><button type="button" class="lang-btn" data-lang="en">EN</button></div>
+    <button type="button" class="theme-btn" id="themeBtn" data-i18n-aria="theme" aria-label="Ganti tema">🌓</button>
+    <div class="avatar" id="avatar" aria-hidden="true">👤</div>
   </div>
-</nav>
+</div></nav>
 
-<main class="cart-container" id="cartContainer">
-  <div class="loading-state">
-    <div class="loading-spinner"></div>
-    <p style="margin-top:12px">Memuat keranjang...</p>
-  </div>
+<main class="wrap" id="app">
+
+  <!-- STATE: belum login -->
+  <section class="state" id="viewAuth" hidden>
+    <h2 data-i18n="auth_title">Masuk dulu untuk checkout</h2>
+    <p data-i18n="auth_sub">Kamu perlu akun Klikva untuk menyelesaikan pesanan.</p>
+    <a class="btn-solid" href="login.html" data-i18n="auth_btn">Masuk</a>
+  </section>
+
+  <!-- STATE: keranjang kosong -->
+  <section class="state" id="viewEmpty" hidden>
+    <h2 data-i18n="empty_title">Keranjang kamu kosong</h2>
+    <p data-i18n="empty_sub">Tambahkan produk dulu sebelum checkout.</p>
+    <a class="btn-solid" href="shop.html" data-i18n="empty_btn">Belanja sekarang</a>
+  </section>
+
+  <!-- CHECKOUT -->
+  <section id="viewCheckout" hidden>
+    <div class="page-head">
+      <h1 data-i18n="title">Checkout</h1>
+      <p data-i18n="sub">Lengkapi data pengiriman dan pilih cara pembayaran.</p>
+    </div>
+    <div id="alerts"></div>
+
+    <div class="grid">
+      <form id="orderForm" class="stack" novalidate autocomplete="on">
+
+        <div class="card">
+          <div class="card-head"><span class="step-n">1</span><h2 data-i18n="s1">Pengiriman</h2></div>
+          <div class="row">
+            <div class="field"><label for="fName" data-i18n="f_name">Nama lengkap</label><input id="fName" type="text" autocomplete="name"><div class="err" id="err-fName" role="alert" hidden></div></div>
+            <div class="field"><label for="fEmail" data-i18n="f_email">Email</label><input id="fEmail" type="email" autocomplete="email" inputmode="email"><div class="err" id="err-fEmail" role="alert" hidden></div></div>
+          </div>
+          <div class="field"><label for="fPhone" data-i18n="f_phone">No. WhatsApp</label><input id="fPhone" type="tel" autocomplete="tel" inputmode="tel" data-i18n-ph="ph_phone" placeholder="0812xxxxxxxx"><div class="err" id="err-fPhone" role="alert" hidden></div></div>
+          <div class="field"><label for="fAddress" data-i18n="f_address">Alamat lengkap</label><textarea id="fAddress" autocomplete="street-address" data-i18n-ph="ph_address" placeholder="Nama jalan, nomor rumah, RT/RW..."></textarea><div class="err" id="err-fAddress" role="alert" hidden></div></div>
+          <div class="row">
+            <div class="field"><label for="fDistrict" data-i18n="f_district">Kecamatan</label><input id="fDistrict" type="text"><div class="err" id="err-fDistrict" role="alert" hidden></div></div>
+            <div class="field"><label for="fCity" data-i18n="f_city">Kota</label><input id="fCity" type="text" autocomplete="address-level2"><div class="err" id="err-fCity" role="alert" hidden></div></div>
+          </div>
+          <div class="field" style="max-width:220px"><label for="fPostal" data-i18n="f_postal">Kode pos</label><input id="fPostal" type="text" inputmode="numeric" maxlength="5" autocomplete="postal-code"><div class="err" id="err-fPostal" role="alert" hidden></div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="step-n">2</span><h2 data-i18n="s2">Kurir</h2></div>
+          <span class="sub-label" data-i18n="c_service">Layanan</span>
+          <div class="seg" role="radiogroup" aria-label="Layanan">
+            <label><input type="radio" name="ctype" value="reguler" checked><span data-i18n="c_reg">Reguler</span></label>
+            <label><input type="radio" name="ctype" value="express"><span data-i18n="c_exp">Express</span></label>
+          </div>
+          <fieldset><legend class="sr-only" data-i18n="s2">Kurir</legend><div class="opts" id="courierList"></div></fieldset>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="step-n">3</span><h2 data-i18n="s3">Pembayaran</h2></div>
+          <fieldset><legend class="sr-only" data-i18n="s3">Pembayaran</legend><div class="opts" id="payList"></div></fieldset>
+          <div class="pay-panel" id="payPanel"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="step-n">4</span><h2 data-i18n="s4">Catatan (opsional)</h2></div>
+          <div class="field"><label for="fNotes" class="sr-only" data-i18n="s4">Catatan</label><textarea id="fNotes" maxlength="300" data-i18n-ph="ph_notes" placeholder="Catatan untuk penjual"></textarea></div>
+        </div>
+      </form>
+
+      <aside class="card summary" aria-labelledby="sumTitle">
+        <h2 id="sumTitle" data-i18n="sum_title">Ringkasan pesanan</h2>
+        <div class="items" id="items"></div>
+
+        <div class="promo">
+          <input id="promoInput" type="text" autocomplete="off" aria-label="Kode promo" data-i18n-ph="promo_ph" placeholder="WELCOME10 / FREESHIP">
+          <button type="button" class="btn-ghost" id="promoBtn" style="padding:9px 18px" data-i18n="promo_apply">Pakai</button>
+        </div>
+        <div class="promo-msg" id="promoMsg" aria-live="polite"></div>
+
+        <div class="totals" id="totals"></div>
+        <button type="button" class="btn-solid block btn-desktop" id="placeBtn" style="margin-top:18px"></button>
+        <div class="hint" id="hint" aria-live="polite"></div>
+        <a href="cart.html" class="edit-cart" data-i18n="edit_cart">Ubah keranjang</a>
+      </aside>
+    </div>
+
+    <div class="mbar" id="mbar">
+      <div><small data-i18n="sum_total">Total</small><b id="mbTotal">Rp 0</b></div>
+      <button type="button" class="btn-solid" id="mbBtn"></button>
+    </div>
+  </section>
+
+  <!-- SUKSES -->
+  <section id="viewSuccess" hidden></section>
 </main>
 
-<footer>
-  <div class="footer-grid">
-    <div class="footer-col">
-      <a href="index.html" class="nav-logo" style="font-size:1.1rem;display:inline-flex;margin-bottom:10px"><img src="logo-klikva.png" alt="Klikva" class="nav-logo-img">Klikva</a>
-      <p data-i18n="footer_desc">Reptil premium dengan genetika eksklusif, dirawat dengan penuh perhatian.</p>
-    </div>
-    <div class="footer-col">
-      <h4 data-i18n="footer_shop">Belanja</h4>
-      <a href="shop.html" data-i18n="footer_all">Semua Produk</a>
-      <a href="index.html#collection" data-i18n="footer_collection">Koleksi</a>
-      <a href="index.html#bestsellers" data-i18n="footer_best">Best Seller</a>
-    </div>
-    <div class="footer-col">
-      <h4 data-i18n="footer_help">Bantuan</h4>
-      <a href="mailto:support@klikva.com" data-i18n="footer_email">Email</a>
-      <a href="#" data-i18n="footer_shipping">Pengiriman</a>
-      <a href="#" data-i18n="footer_guarantee">Garansi</a>
-    </div>
-    <div class="footer-col">
-      <h4 data-i18n="footer_account">Akun</h4>
-      <a href="registerd.html" data-i18n="footer_login">Masuk</a>
-      <a href="dashboard.html" data-i18n="footer_dashboard">Dashboard</a>
-      <a href="cart.html" data-i18n="footer_cart">Keranjang</a>
-    </div>
-  </div>
-  <div class="footer-bottom" data-i18n="footer_copyright">© 2025 Klikva. Dibuat dengan semangat, dirawat dengan penuh perhatian.</div>
-</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-/* =================================================================
-   KONFIGURASI
-================================================================= */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzq6dz2VYtO1iWu_U6H02jZSWQBZ3Lvu9EKra8Z2QUMy7UtOG_UVM2WeUeT1nne1Kz_/exec';
+/* =====================================================================
+   KONFIGURASI  — sesuaikan bagian ini
+===================================================================== */
+const CONFIG = {
+  // Apps Script yang sama dengan shop.html (getProducts) + orders-api.gs
+  API_URL: 'https://script.google.com/macros/s/AKfycbxmwYJCnVjqFKD_dMhYsEkxKP4kR4gWyHXUcYXwpMwo990-L2bzgKzGQa5BCBCbd0Tk2w/exec',
+  ADMIN_WHATSAPP: '6285335627469',
 
-/* =================================================================
-   TRANSLATIONS
-================================================================= */
-const translations = {
+  // GANTI dengan rekening asli sebelum dipakai pelanggan
+  BANK_ACCOUNTS: [
+    { bank: 'BCA',     number: '123 456 7890', holder: 'Klikva Indonesia' },
+    { bank: 'Mandiri', number: '987 654 3210', holder: 'Klikva Indonesia' },
+    { bank: 'BNI',     number: '456 789 0123', holder: 'Klikva Indonesia' }
+  ],
+
+  // URL gambar QRIS asli milik toko. Kosong = opsi QRIS disembunyikan.
+  QRIS_IMAGE_URL: '',
+
+  // Harus sama dengan OC.COURIERS & OC.PROMOS di orders-api.gs (server yang menentukan total akhir)
+  COURIERS: {
+    jne:     { name: 'JNE',         regular: 15000, express: 25000, estDays: '2-3' },
+    jnt:     { name: 'J&T Express', regular: 12000, express: 22000, estDays: '2-3' },
+    sicepat: { name: 'SiCepat',     regular: 10000, express: 20000, estDays: '1-2' }
+  },
+  PROMOS: {
+    WELCOME10: { type: 'percent', value: 10 },
+    FREESHIP:  { type: 'free_shipping' }
+  }
+};
+
+/* =====================================================================
+   TERJEMAHAN
+===================================================================== */
+const I18N = {
   id: {
-    page_title: 'Keranjang — Klikva',
-    cart_title: 'Keranjang Belanja',
-    cart_items: 'item di keranjang',
-    order_summary: 'Ringkasan Pesanan',
-    subtotal: 'Subtotal',
-    shipping: 'Pengiriman',
-    free: 'GRATIS',
-    total: 'Total',
-    checkout: 'Checkout →',
-    checkout_blocked: '🚫 Stok Tidak Tersedia',
-    checkout_hint_blocked: 'Hapus produk stok habis untuk melanjutkan',
-    continue_shopping: '← Lanjut Belanja',
-    empty_title: 'Keranjang kamu kosong',
-    empty_desc: 'Belum ada item di keranjang. Yuk mulai belanja!',
-    empty_btn: 'Mulai Belanja →',
-    stock_out: 'Stok Habis',
-    stock_left: 'Sisa',
-    stock_available: '✓ Stok tersedia',
-    stock_almost: 'Hampir habis! Sisa',
-    stock_not_enough: 'Stok tidak cukup (tersisa',
-    stock_out_banner_title: 'Beberapa produk stok habis!',
-    stock_out_banner_desc: 'Hapus produk tersebut agar bisa lanjut checkout.',
-    stock_low_banner_title: 'Stok hampir habis, segera checkout!',
-    stock_low_banner_desc: 'sisa',
-    product_unavailable: 'Produk tidak tersedia',
-    product_deleted: 'Produk sudah tidak dijual',
-    remove: 'Hapus',
-    loading: 'Memuat keranjang...',
-    footer_desc: 'Reptil premium dengan genetika eksklusif, dirawat dengan penuh perhatian.',
-    footer_shop: 'Belanja',
-    footer_all: 'Semua Produk',
-    footer_collection: 'Koleksi',
-    footer_best: 'Best Seller',
-    footer_help: 'Bantuan',
-    footer_email: 'Email',
-    footer_shipping: 'Pengiriman',
-    footer_guarantee: 'Garansi',
-    footer_account: 'Akun',
-    footer_login: 'Masuk',
-    footer_dashboard: 'Dashboard',
-    footer_cart: 'Keranjang',
-    footer_copyright: '© 2025 Klikva. Dibuat dengan semangat, dirawat dengan penuh perhatian.',
-    nav_shop: 'Belanja',
-    nav_login: 'Masuk',
-    toast_stock_limit: '⚠️ Stok {name} hanya tersisa {stock}',
-    toast_need_login: 'Silakan login dulu untuk checkout',
-    toast_checkout_blocked: 'Checkout dibatalkan. Ada produk stok habis.'
+    theme:'Ganti tema', back_cart:'← Keranjang',
+    auth_title:'Masuk dulu untuk checkout', auth_sub:'Kamu perlu akun Klikva untuk menyelesaikan pesanan.', auth_btn:'Masuk',
+    empty_title:'Keranjang kamu kosong', empty_sub:'Tambahkan produk dulu sebelum checkout.', empty_btn:'Belanja sekarang',
+    title:'Checkout', sub:'Lengkapi data pengiriman dan pilih cara pembayaran.',
+    s1:'Pengiriman', s2:'Kurir', s3:'Pembayaran', s4:'Catatan (opsional)',
+    f_name:'Nama lengkap', f_email:'Email', f_phone:'No. WhatsApp', f_address:'Alamat lengkap', f_district:'Kecamatan', f_city:'Kota', f_postal:'Kode pos',
+    ph_phone:'0812xxxxxxxx', ph_address:'Nama jalan, nomor rumah, RT/RW...', ph_notes:'Catatan untuk penjual, misalnya jam pengiriman',
+    e_required:'Wajib diisi', e_email:'Format email tidak valid', e_phone:'Gunakan format 08xxxxxxxxxx', e_postal:'Kode pos terdiri dari 5 angka',
+    c_service:'Layanan', c_reg:'Reguler', c_exp:'Express', c_est:'Estimasi {d} hari', c_faster:'Lebih cepat dari reguler',
+    p_bank:'Transfer bank', p_bank_sub:'Bukti transfer diunggah setelah pesanan dibuat', p_qris:'QRIS', p_qris_sub:'Scan dengan aplikasi bank atau e-wallet', p_cod:'Bayar di tempat (COD)', p_cod_sub:'Bayar tunai saat paket tiba',
+    pay_bank_note:'Transfer ke salah satu rekening di bawah setelah pesanan dibuat.', pay_qris_note:'Kode QRIS ditampilkan setelah pesanan dibuat.', pay_cod_note:'Tidak perlu membayar sekarang. Siapkan uang tunai saat paket tiba.',
+    sum_title:'Ringkasan pesanan', sum_subtotal:'Subtotal', sum_shipping:'Ongkir ({c})', sum_discount:'Diskon', sum_total:'Total', qty:'Jml {n}',
+    promo_ph:'WELCOME10 / FREESHIP', promo_apply:'Pakai', promo_remove:'Hapus kode', promo_ok:'Kode {code} dipakai', promo_bad:'Kode tidak valid',
+    edit_cart:'Ubah keranjang', btn_place:'Buat pesanan', btn_placing:'Memproses...', btn_loading:'Memuat produk...', btn_error:'Produk belum termuat',
+    h_blocked:'Perbaiki produk bermasalah untuk melanjutkan',
+    st_out:'Stok habis', st_insufficient:'Stok tidak cukup (sisa {n})', st_low:'Stok menipis, sisa {n}', st_missing:'Produk tidak tersedia lagi', rm:'Hapus',
+    a_block:'Ada produk yang tidak bisa dipesan', a_low:'Stok hampir habis, segera selesaikan pesanan', a_cart:'Kembali ke keranjang',
+    err_products:'Gagal memuat data produk', retry:'Coba lagi',
+    t_copied:'Disalin', t_net:'Koneksi bermasalah. Coba lagi.', t_fail:'Gagal membuat pesanan', t_fix:'Lengkapi data yang ditandai', t_proof_ok:'Bukti transfer terkirim', t_proof_big:'Gambar terlalu besar (maks 8 MB)', t_proof_type:'Pilih file gambar', t_stock:'Stok berubah, periksa keranjang',
+    ok_title:'Pesanan berhasil dibuat', ok_sub:'Terima kasih sudah berbelanja di Klikva. Konfirmasi dikirim ke {email}.',
+    ok_id:'Nomor pesanan', ok_status:'Status', ok_method:'Pembayaran', ok_total:'Total', ok_to_pay:'Total yang harus dibayar',
+    ok_bank_hint:'Transfer sesuai total, lalu unggah bukti di bawah.', ok_qris_hint:'Scan QRIS, lalu unggah bukti pembayaran di bawah.', ok_qris_missing:'Kode QRIS belum tersedia. Hubungi kami lewat WhatsApp untuk cara pembayaran.', ok_cod:'Siapkan uang tunai saat paket tiba.',
+    ok_proof_title:'Unggah bukti pembayaran', ok_proof_choose:'Pilih gambar', ok_proof_send:'Kirim bukti', ok_proof_sent:'Bukti pembayaran sudah terkirim',
+    ok_wa:'Hubungi via WhatsApp', ok_continue:'Lanjut belanja', ok_account:'Lihat akun', copy:'Salin',
+    m_bank_transfer:'Transfer bank', m_qris:'QRIS', m_cod:'COD',
+    status_waiting_payment:'Menunggu pembayaran', status_waiting_confirm:'Menunggu konfirmasi', status_waiting_verify:'Menunggu verifikasi',
+    wa_pay:'Halo Klikva, saya sudah membayar pesanan {id}.\nNama: {name}\nTotal: {total}\nMohon dikonfirmasi.', wa_cod:'Halo Klikva, saya baru membuat pesanan COD {id}.\nNama: {name}\nTotal: {total}'
   },
   en: {
-    page_title: 'Cart — Klikva',
-    cart_title: 'Shopping Cart',
-    cart_items: 'items in cart',
-    order_summary: 'Order Summary',
-    subtotal: 'Subtotal',
-    shipping: 'Shipping',
-    free: 'FREE',
-    total: 'Total',
-    checkout: 'Checkout →',
-    checkout_blocked: '🚫 Stock Not Available',
-    checkout_hint_blocked: 'Remove out-of-stock products to continue',
-    continue_shopping: '← Continue Shopping',
-    empty_title: 'Your cart is empty',
-    empty_desc: "Looks like you haven't added any items yet.",
-    empty_btn: 'Start Shopping →',
-    stock_out: 'Out of Stock',
-    stock_left: 'Left',
-    stock_available: '✓ In stock',
-    stock_almost: 'Almost gone! Only',
-    stock_not_enough: 'Not enough stock (only',
-    stock_out_banner_title: 'Some products are out of stock!',
-    stock_out_banner_desc: 'Remove those products to continue checkout.',
-    stock_low_banner_title: 'Low stock, checkout soon!',
-    stock_low_banner_desc: 'only',
-    product_unavailable: 'Product unavailable',
-    product_deleted: 'Product no longer sold',
-    remove: 'Remove',
-    loading: 'Loading cart...',
-    footer_desc: 'Premium reptiles with exclusive genetics, raised with care.',
-    footer_shop: 'Shop',
-    footer_all: 'All Products',
-    footer_collection: 'Collection',
-    footer_best: 'Best Seller',
-    footer_help: 'Help',
-    footer_email: 'Email',
-    footer_shipping: 'Shipping',
-    footer_guarantee: 'Guarantee',
-    footer_account: 'Account',
-    footer_login: 'Sign in',
-    footer_dashboard: 'Dashboard',
-    footer_cart: 'Cart',
-    footer_copyright: '© 2025 Klikva. Made with passion, raised with care.',
-    nav_shop: 'Shop',
-    nav_login: 'Sign in',
-    toast_stock_limit: '⚠️ Only {stock} left of {name}',
-    toast_need_login: 'Please login first to checkout',
-    toast_checkout_blocked: 'Checkout cancelled. Some products are out of stock.'
+    theme:'Toggle theme', back_cart:'← Cart',
+    auth_title:'Sign in to check out', auth_sub:'You need a Klikva account to complete your order.', auth_btn:'Sign in',
+    empty_title:'Your cart is empty', empty_sub:'Add some products before checking out.', empty_btn:'Shop now',
+    title:'Checkout', sub:'Complete your shipping details and choose how to pay.',
+    s1:'Shipping', s2:'Courier', s3:'Payment', s4:'Notes (optional)',
+    f_name:'Full name', f_email:'Email', f_phone:'WhatsApp number', f_address:'Full address', f_district:'District', f_city:'City', f_postal:'Postal code',
+    ph_phone:'0812xxxxxxxx', ph_address:'Street, house number, neighborhood...', ph_notes:'Note for the seller, e.g. preferred delivery time',
+    e_required:'Required', e_email:'Invalid email format', e_phone:'Use the format 08xxxxxxxxxx', e_postal:'Postal code has 5 digits',
+    c_service:'Service', c_reg:'Regular', c_exp:'Express', c_est:'Estimated {d} days', c_faster:'Faster than regular',
+    p_bank:'Bank transfer', p_bank_sub:'Upload proof after placing the order', p_qris:'QRIS', p_qris_sub:'Scan with your bank or e-wallet app', p_cod:'Cash on delivery (COD)', p_cod_sub:'Pay in cash when the parcel arrives',
+    pay_bank_note:'Transfer to one of the accounts below after placing the order.', pay_qris_note:'The QRIS code is shown after you place the order.', pay_cod_note:'No payment needed now. Have cash ready when the parcel arrives.',
+    sum_title:'Order summary', sum_subtotal:'Subtotal', sum_shipping:'Shipping ({c})', sum_discount:'Discount', sum_total:'Total', qty:'Qty {n}',
+    promo_ph:'WELCOME10 / FREESHIP', promo_apply:'Apply', promo_remove:'Remove code', promo_ok:'Code {code} applied', promo_bad:'Invalid code',
+    edit_cart:'Edit cart', btn_place:'Place order', btn_placing:'Processing...', btn_loading:'Loading products...', btn_error:'Products not loaded',
+    h_blocked:'Fix the problem items to continue',
+    st_out:'Out of stock', st_insufficient:'Not enough stock ({n} left)', st_low:'Low stock, {n} left', st_missing:'No longer available', rm:'Remove',
+    a_block:"Some items can't be ordered", a_low:'Stock is running low, complete your order soon', a_cart:'Back to cart',
+    err_products:"Couldn't load product data", retry:'Try again',
+    t_copied:'Copied', t_net:'Connection problem. Please try again.', t_fail:"Couldn't place the order", t_fix:'Please fix the highlighted fields', t_proof_ok:'Proof of payment sent', t_proof_big:'Image too large (max 8 MB)', t_proof_type:'Choose an image file', t_stock:'Stock changed, please check your cart',
+    ok_title:'Order placed', ok_sub:'Thanks for shopping at Klikva. A confirmation was sent to {email}.',
+    ok_id:'Order number', ok_status:'Status', ok_method:'Payment', ok_total:'Total', ok_to_pay:'Amount to pay',
+    ok_bank_hint:'Transfer the exact total, then upload proof below.', ok_qris_hint:'Scan the QRIS code, then upload proof of payment below.', ok_qris_missing:'The QRIS code is not available yet. Contact us on WhatsApp for payment instructions.', ok_cod:'Have cash ready when the parcel arrives.',
+    ok_proof_title:'Upload proof of payment', ok_proof_choose:'Choose image', ok_proof_send:'Send proof', ok_proof_sent:'Proof of payment sent',
+    ok_wa:'Contact via WhatsApp', ok_continue:'Continue shopping', ok_account:'My account', copy:'Copy',
+    m_bank_transfer:'Bank transfer', m_qris:'QRIS', m_cod:'COD',
+    status_waiting_payment:'Awaiting payment', status_waiting_confirm:'Awaiting confirmation', status_waiting_verify:'Awaiting verification',
+    wa_pay:'Hello Klikva, I have paid for order {id}.\nName: {name}\nTotal: {total}\nPlease confirm.', wa_cod:'Hello Klikva, I just placed a COD order {id}.\nName: {name}\nTotal: {total}'
   }
 };
+const STATUS_KEYS = { 'Menunggu Pembayaran':'status_waiting_payment', 'Menunggu Konfirmasi':'status_waiting_confirm', 'Menunggu Verifikasi':'status_waiting_verify' };
 
-let currentLang = localStorage.getItem('klikva_lang') || 'id';
-const t = (key, params = {}) => {
-  let text = (translations[currentLang] || translations.id)[key] || key;
-  Object.keys(params).forEach(k => { text = text.replace(`{${k}}`, params[k]); });
-  return text;
-};
+/* =====================================================================
+   STATE & HELPERS
+===================================================================== */
+const S = { lang: localStorage.getItem('klikva_lang') === 'en' ? 'en' : 'id', cart: [], products: [], loading: true, productsError: false,
+  courier: 'jne', ctype: 'reguler', payment: 'bank_transfer', promo: null, submitting: false, requestId: '', lastOrder: null };
 
-function applyLang() {
-  document.documentElement.lang = currentLang;
-  document.title = t('page_title');
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    el.textContent = t(el.getAttribute('data-i18n'));
-  });
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.lang === currentLang);
-  });
-  // Update static button labels
-  const navShop = document.getElementById('navShop');
-  if (navShop) navShop.textContent = t('nav_shop');
-  const loginBtn = document.getElementById('loginBtn');
-  if (loginBtn && loginBtn.style.display !== 'none') loginBtn.textContent = t('nav_login');
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const rp  = n => 'Rp ' + (Number(n) || 0).toLocaleString('id-ID');
+const t   = (k, v = {}) => { let s = (I18N[S.lang][k] ?? I18N.id[k] ?? k); Object.keys(v).forEach(x => { s = s.split('{' + x + '}').join(v[x]); }); return s; };
+const readJSON = (k, fb) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch (e) { return fb; } };
+const newId = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'r' + Date.now() + Math.random().toString(36).slice(2, 10);
+
+let toastTimer;
+function toast(msg, type = '') {
+  const el = $('#toast'); el.textContent = msg; el.className = 'toast show ' + type;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.className = 'toast'; }, 3200);
 }
 
-document.querySelectorAll('.lang-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    currentLang = btn.dataset.lang;
-    localStorage.setItem('klikva_lang', currentLang);
-    applyLang();
-    renderCart();
-  });
-});
-
-/* =================================================================
-   THEME
-================================================================= */
-if (localStorage.getItem('klikva_theme') === 'dark') {
-  document.documentElement.setAttribute('data-theme', 'dark');
+function applyStaticI18n() {
+  document.documentElement.lang = S.lang;
+  $$('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  $$('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  $$('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  $$('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === S.lang));
 }
 
-/* =================================================================
-   STATE
-================================================================= */
-let products = [];
-let productsLoaded = false;
+/* ---------- Produk, keranjang, stok ---------- */
+const saveCart = () => localStorage.setItem('klikva_cart', JSON.stringify(S.cart));
+const findProduct = id => S.products.find(p => String(p.id) === String(id));
 
-/* =================================================================
-   FETCH PRODUK DARI SHEET (sumber sama dengan shop.html)
-================================================================= */
+function stockStatus(p, qty) {
+  const raw = p.stock;
+  if (raw === null || raw === undefined || raw === '') return { status: 'ok' };
+  const n = Number(raw);
+  if (isNaN(n)) return { status: 'ok' };
+  if (n <= 0) return { status: 'out', left: 0 };
+  if (qty > n) return { status: 'insufficient', left: n };
+  if (n <= 3) return { status: 'low', left: n };
+  return { status: 'ok', left: n };
+}
+function lines() {
+  return S.cart.map(it => {
+    const p = findProduct(it.id);
+    return { it, p, st: p ? stockStatus(p, it.quantity) : { status: 'missing' } };
+  });
+}
+const BAD = ['missing', 'out', 'insufficient'];
+const blocking = () => S.loading && !S.products.length ? [] : lines().filter(l => BAD.includes(l.st.status));
+
+function totals() {
+  let sub = 0;
+  lines().forEach(l => { if (l.p) sub += (Number(l.p.price) || 0) * l.it.quantity; });
+  const c = CONFIG.COURIERS[S.courier];
+  const ship = sub > 0 ? (S.ctype === 'express' ? c.express : c.regular) : 0;
+  let disc = 0;
+  if (S.promo) {
+    const r = CONFIG.PROMOS[S.promo];
+    if (r.type === 'percent') disc = Math.floor(sub * r.value / 100);
+    else if (r.type === 'free_shipping') disc = ship;
+  }
+  disc = Math.min(disc, sub + ship);
+  return { sub, ship, disc, total: sub + ship - disc };
+}
+
+function reasonText(l) {
+  if (l.st.status === 'missing') return t('st_missing');
+  if (l.st.status === 'out') return t('st_out');
+  if (l.st.status === 'insufficient') return t('st_insufficient', { n: l.st.left });
+  return t('st_low', { n: l.st.left });
+}
+function thumb(p) {
+  const img = String((p && p.image) || '');
+  return /^(data:|https?:)/.test(img) ? `<img src="${esc(img)}" alt="">` : `<span aria-hidden="true">${esc(img || '📦')}</span>`;
+}
+
+/* =====================================================================
+   RENDER
+===================================================================== */
+function renderAlerts() {
+  const bad = blocking();
+  const low = lines().filter(l => l.st.status === 'low');
+  let html = '';
+  if (bad.length) {
+    html += `<div class="banner bad" role="alert"><div><b>${t('a_block')}</b><ul>${bad.map(l => `<li>${esc(l.p ? l.p.name : '#' + l.it.id)} — ${reasonText(l)}</li>`).join('')}</ul><a href="cart.html">${t('a_cart')}</a></div></div>`;
+  } else if (low.length) {
+    html += `<div class="banner warn"><div><b>${t('a_low')}</b><ul>${low.map(l => `<li>${esc(l.p.name)} — ${reasonText(l)}</li>`).join('')}</ul></div></div>`;
+  }
+  $('#alerts').innerHTML = html;
+}
+
+function renderCourierList() {
+  $('#courierList').innerHTML = Object.entries(CONFIG.COURIERS).map(([k, c]) => {
+    const price = S.ctype === 'express' ? c.express : c.regular;
+    const sub = S.ctype === 'express' ? t('c_faster') : t('c_est', { d: c.estDays });
+    return `<label class="opt${S.courier === k ? ' selected' : ''}"><input type="radio" name="courier" value="${k}"${S.courier === k ? ' checked' : ''}><span class="opt-main"><b>${esc(c.name)}</b><small>${sub}</small></span><span class="opt-price">${rp(price)}</span></label>`;
+  }).join('');
+}
+
+function paymentOptions() {
+  const o = [{ k: 'bank_transfer', n: t('p_bank'), s: t('p_bank_sub') }];
+  if (CONFIG.QRIS_IMAGE_URL) o.push({ k: 'qris', n: t('p_qris'), s: t('p_qris_sub') });
+  o.push({ k: 'cod', n: t('p_cod'), s: t('p_cod_sub') });
+  return o;
+}
+function renderPayList() {
+  const opts = paymentOptions();
+  if (!opts.some(o => o.k === S.payment)) S.payment = 'bank_transfer';
+  $('#payList').innerHTML = opts.map(o => `<label class="opt${S.payment === o.k ? ' selected' : ''}"><input type="radio" name="payment" value="${o.k}"${S.payment === o.k ? ' checked' : ''}><span class="opt-main"><b>${o.n}</b><small>${o.s}</small></span></label>`).join('');
+}
+
+function accountsHtml() {
+  return CONFIG.BANK_ACCOUNTS.map(a => `<div class="acct"><div><b>${esc(a.bank)}</b><span class="num">${esc(a.number)}</span><small>a.n. ${esc(a.holder)}</small></div><button type="button" class="copy-btn" data-copy="${esc(a.number.replace(/\s/g, ''))}">${t('copy')}</button></div>`).join('');
+}
+function renderPayPanel() {
+  const el = $('#payPanel');
+  if (S.payment === 'bank_transfer') el.innerHTML = `<p>${t('pay_bank_note')}</p>${accountsHtml()}`;
+  else if (S.payment === 'qris') el.innerHTML = `<p>${t('pay_qris_note')}</p>`;
+  else el.innerHTML = `<p>${t('pay_cod_note')}</p>`;
+}
+
+function renderItems() {
+  const box = $('#items');
+  if (S.productsError) { box.innerHTML = `<div style="text-align:center;padding:18px 0"><p style="color:var(--bad);font-size:.88rem;margin-bottom:12px">${t('err_products')}</p><button type="button" class="btn-ghost" data-act="retry">${t('retry')}</button></div>`; return; }
+  if (S.loading && !S.products.length) { box.innerHTML = [1, 2].map(() => `<div class="sk-line"><span class="sk"></span><span><span class="sk" style="width:80%;margin-bottom:10px"></span><span class="sk" style="width:45%"></span></span></div>`).join(''); return; }
+  box.innerHTML = lines().map(l => {
+    const bad = BAD.includes(l.st.status), low = l.st.status === 'low';
+    const name = l.p ? l.p.name : '#' + l.it.id;
+    const price = l.p ? rp((Number(l.p.price) || 0) * l.it.quantity) : '—';
+    const tag = bad ? `<span class="tag bad">${reasonText(l)}</span>${l.st.status === 'missing' ? `<button type="button" class="tag-btn" data-rm="${esc(l.it.id)}">${t('rm')}</button>` : ''}` : low ? `<span class="tag warn">${reasonText(l)}</span>` : '';
+    return `<div class="line${bad ? ' is-bad' : ''}"><div class="thumb">${thumb(l.p)}</div><div><div class="line-name">${esc(name)}</div><div class="line-meta">${t('qty', { n: l.it.quantity })}${l.p ? ' · ' + rp(l.p.price) : ''}</div>${tag}</div><div class="line-price">${price}</div></div>`;
+  }).join('');
+}
+
+function renderTotals() {
+  const x = totals(), c = CONFIG.COURIERS[S.courier];
+  const svc = S.ctype === 'express' ? t('c_exp') : t('c_reg');
+  $('#totals').innerHTML =
+    `<div class="t-row"><span>${t('sum_subtotal')}</span><span>${rp(x.sub)}</span></div>` +
+    `<div class="t-row"><span>${t('sum_shipping', { c: esc(c.name) + ' ' + svc })}</span><span>${rp(x.ship)}</span></div>` +
+    (x.disc > 0 ? `<div class="t-row disc"><span>${t('sum_discount')}</span><span>-${rp(x.disc)}</span></div>` : '') +
+    `<div class="t-row total"><span>${t('sum_total')}</span><span>${rp(x.total)}</span></div>`;
+  $('#mbTotal').textContent = rp(x.total);
+}
+
+function updateOrderButtons() {
+  let label = t('btn_place'), disabled = false, hint = '';
+  if (S.submitting) { label = t('btn_placing'); disabled = true; }
+  else if (S.productsError) { label = t('btn_error'); disabled = true; }
+  else if (S.loading && !S.products.length) { label = t('btn_loading'); disabled = true; }
+  else if (blocking().length) { disabled = true; hint = t('h_blocked'); }
+  const inner = (S.submitting ? '<span class="spin" aria-hidden="true"></span>' : '') + esc(label);
+  ['#placeBtn', '#mbBtn'].forEach(sel => { const b = $(sel); b.innerHTML = inner; b.disabled = disabled; });
+  $('#hint').textContent = hint;
+}
+
+function renderAll() {
+  renderAlerts(); renderCourierList(); renderPayList(); renderPayPanel();
+  renderItems(); renderTotals(); updateOrderButtons();
+  const pm = $('#promoMsg');
+  if (S.promo) { pm.className = 'promo-msg ok'; pm.innerHTML = `${esc(t('promo_ok', { code: S.promo }))} · <button type="button" class="tag-btn" data-act="promo-remove">${t('promo_remove')}</button>`; }
+}
+
+/* =====================================================================
+   DATA PRODUK
+===================================================================== */
+async function refreshProducts() {
+  const res = await fetch(CONFIG.API_URL + '?action=getProducts');
+  const json = await res.json();
+  if (!json || !json.success || !Array.isArray(json.data)) throw new Error('bad response');
+  S.products = json.data;
+  localStorage.setItem('kv_products_cache', JSON.stringify(json.data));   // cache yang sama dengan shop.html
+}
 async function loadProducts() {
-  // Coba cache dulu biar cepat
-  const cached = localStorage.getItem('kv_products_cache');
-  if (cached) {
-    try { products = JSON.parse(cached); productsLoaded = true; } catch(e) {}
-  }
+  const cached = readJSON('kv_products_cache', null);
+  if (Array.isArray(cached) && cached.length) { S.products = cached; S.loading = false; }
+  S.productsError = false;
+  renderAll();
+  try { await refreshProducts(); } catch (e) { if (!S.products.length) S.productsError = true; }
+  S.loading = false;
+  renderAll();
+}
+
+/* =====================================================================
+   FORM & VALIDASI
+===================================================================== */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function normalizePhone(raw) {
+  let d = String(raw || '').replace(/[^\d+]/g, '').replace(/^\+/, '');
+  if (d.startsWith('62')) d = '0' + d.slice(2);
+  else if (d.startsWith('8')) d = '0' + d;
+  return /^08\d{8,12}$/.test(d) ? d : '';
+}
+function setErr(id, key) {
+  const el = $('#' + id), box = $('#err-' + id);
+  if (key) { el.setAttribute('aria-invalid', 'true'); el.setAttribute('aria-describedby', 'err-' + id); box.textContent = t(key); box.hidden = false; }
+  else { el.removeAttribute('aria-invalid'); el.removeAttribute('aria-describedby'); box.textContent = ''; box.hidden = true; }
+}
+function validateForm() {
+  const v = id => ($('#' + id).value || '').trim();
+  let first = null;
+  const fail = (id, key) => { setErr(id, key); if (!first) first = id; };
+  ['fName', 'fEmail', 'fPhone', 'fAddress', 'fDistrict', 'fCity', 'fPostal'].forEach(id => setErr(id, null));
+  if (v('fName').length < 2) fail('fName', 'e_required');
+  if (!v('fEmail')) fail('fEmail', 'e_required'); else if (!EMAIL_RE.test(v('fEmail'))) fail('fEmail', 'e_email');
+  const phone = normalizePhone(v('fPhone'));
+  if (!v('fPhone')) fail('fPhone', 'e_required'); else if (!phone) fail('fPhone', 'e_phone');
+  if (!v('fAddress')) fail('fAddress', 'e_required');
+  if (!v('fDistrict')) fail('fDistrict', 'e_required');
+  if (!v('fCity')) fail('fCity', 'e_required');
+  if (!v('fPostal')) fail('fPostal', 'e_required'); else if (!/^\d{5}$/.test(v('fPostal'))) fail('fPostal', 'e_postal');
+  if (first) { $('#' + first).focus(); return null; }
+  return { name: v('fName'), email: v('fEmail').toLowerCase(), phone, address: v('fAddress'), district: v('fDistrict'), city: v('fCity'), postalCode: v('fPostal') };
+}
+function prefill() {
+  const u = readJSON('klikva_user', {}) || {}, p = readJSON('klikva_profile', {}) || {};
+  const set = (id, val) => { if (val && !$('#' + id).value) $('#' + id).value = val; };
+  set('fName', u.namaLengkap); set('fEmail', u.email); set('fPhone', p.whatsapp || u.whatsapp);
+  set('fAddress', p.alamat || u.alamat); set('fDistrict', p.kecamatan || u.kecamatan);
+  set('fCity', p.kota || u.kota); set('fPostal', p.kodePos || u.kodePos);
+}
+
+/* ---------- Promo ---------- */
+function applyPromo() {
+  const code = ($('#promoInput').value || '').trim().toUpperCase(), pm = $('#promoMsg');
+  if (!code) { S.promo = null; pm.className = 'promo-msg'; pm.textContent = ''; renderTotals(); return; }
+  if (!CONFIG.PROMOS[code]) { S.promo = null; pm.className = 'promo-msg bad'; pm.textContent = t('promo_bad'); renderTotals(); return; }
+  S.promo = code; $('#promoInput').value = '';
+  renderAll();
+}
+
+/* =====================================================================
+   KIRIM PESANAN
+===================================================================== */
+async function api(payload) {
+  const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 30000);
   try {
-    const res = await fetch(`${API_URL}?action=getProducts`);
-    const data = await res.json();
-    if (data.success && data.data) {
-      products = data.data;
-      productsLoaded = true;
-      localStorage.setItem('kv_products_cache', JSON.stringify(products));
+    const r = await fetch(CONFIG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), signal: ctrl.signal });
+    return await r.json();
+  } finally { clearTimeout(to); }
+}
+
+async function placeOrder() {
+  if (S.submitting || S.loading || S.productsError) return;
+  if (blocking().length) { updateOrderButtons(); return; }
+  const cust = validateForm();
+  if (!cust) { toast(t('t_fix'), 'warn'); return; }
+  S.submitting = true; updateOrderButtons();
+  const payload = {
+    action: 'createOrder', requestId: S.requestId, customer: { ...cust, email: (readJSON('klikva_user', {}) || {}).email || cust.email },
+    shipping: { courier: S.courier, type: S.ctype }, payment: S.payment, promo: S.promo,
+    notes: ($('#fNotes').value || '').trim(), items: S.cart.map(i => ({ id: i.id, quantity: i.quantity })), lang: S.lang
+  };
+  try {
+    const res = await api(payload);
+    if (res && res.success) { onOrderSuccess(res.order, cust); return; }
+    S.requestId = newId();                       // gagal definitif: boleh dicoba lagi sebagai permintaan baru
+    if (res && res.code === 'STOCK_ISSUE') {
+      toast(t('t_stock'), 'warn');
+      try { await refreshProducts(); } catch (e) {}
+      S.submitting = false; renderAll(); return;
     }
+    toast((res && res.message) || t('t_fail'), 'bad');
   } catch (e) {
-    console.warn('Gagal fetch produk, pakai cache:', e);
+    toast(t('t_net'), 'bad');                    // requestId dipertahankan agar kirim ulang tidak dobel
+  }
+  S.submitting = false; updateOrderButtons();
+}
+
+function onOrderSuccess(order, cust) {
+  // sinkronkan cache stok lokal (dipakai shop.html)
+  const cache = readJSON('kv_products_cache', null);
+  if (Array.isArray(cache)) {
+    S.cart.forEach(i => { const p = cache.find(x => String(x.id) === String(i.id)); if (p && p.stock != null && p.stock !== '') p.stock = Math.max(0, Number(p.stock) - i.quantity); });
+    localStorage.setItem('kv_products_cache', JSON.stringify(cache));
+  }
+  S.cart = []; saveCart();
+  S.lastOrder = { order, customer: { name: cust.name, email: cust.email }, proofSent: false };
+  sessionStorage.setItem('klikva_last_order', JSON.stringify(S.lastOrder));
+  S.submitting = false;
+  showView('success'); window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* =====================================================================
+   HALAMAN SUKSES
+===================================================================== */
+function statusLabel(s) { return STATUS_KEYS[s] ? t(STATUS_KEYS[s]) : esc(s); }
+
+function renderSuccess() {
+  const { order: o, customer: c, proofSent } = S.lastOrder;
+  const needsProof = o.paymentMethod !== 'cod';
+  let payBlock = '';
+  if (o.paymentMethod === 'bank_transfer') payBlock = `<p style="color:var(--text-secondary);font-size:.88rem;margin-bottom:6px">${t('ok_bank_hint')}</p>${accountsHtml()}`;
+  else if (o.paymentMethod === 'qris') payBlock = CONFIG.QRIS_IMAGE_URL ? `<p style="color:var(--text-secondary);font-size:.88rem;margin-bottom:12px">${t('ok_qris_hint')}</p><img class="qris-img" src="${esc(CONFIG.QRIS_IMAGE_URL)}" alt="QRIS">` : `<p style="color:var(--text-secondary);font-size:.88rem">${t('ok_qris_missing')}</p>`;
+  else payBlock = `<p style="color:var(--text-secondary);font-size:.88rem">${t('ok_cod')}</p>`;
+
+  const proof = needsProof ? `<div class="card" style="margin-top:20px"><div class="card-head"><h2>${t('ok_proof_title')}</h2></div>${proofSent
+    ? `<span class="chip ok">${t('ok_proof_sent')}</span>`
+    : `<div class="upload"><input type="file" id="proofFile" accept="image/jpeg,image/png,image/webp" class="sr-only"><label for="proofFile" class="btn-ghost" style="cursor:pointer">${t('ok_proof_choose')}</label><img id="proofPreview" alt="" hidden><div style="margin-top:12px"><button type="button" class="btn-solid" id="proofSend" data-act="proof-send" disabled>${t('ok_proof_send')}</button></div></div>`}</div>` : '';
+
+  const wa = t(o.paymentMethod === 'cod' ? 'wa_cod' : 'wa_pay', { id: o.orderId, name: c.name, total: rp(o.total) });
+  $('#viewSuccess').innerHTML = `<div class="ok-wrap">
+    <div class="ok-head"><div class="ok-icon" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <h1 tabindex="-1" id="okTitle">${t('ok_title')}</h1><p>${t('ok_sub', { email: esc(c.email) })}</p></div>
+    <div class="card">
+      <div class="kv"><span>${t('ok_id')}</span><b>${esc(o.orderId)} <button type="button" class="copy-btn" data-copy="${esc(o.orderId)}" style="margin-left:6px">${t('copy')}</button></b></div>
+      <div class="kv"><span>${t('ok_status')}</span><b><span class="chip">${statusLabel(o.status)}</span></b></div>
+      <div class="kv"><span>${t('ok_method')}</span><b>${t('m_' + o.paymentMethod)}</b></div>
+      <div class="kv"><span>${t('sum_subtotal')}</span><b>${rp(o.subtotal)}</b></div>
+      <div class="kv"><span>${t('sum_shipping', { c: esc(o.courier) + ' ' + (o.courierType === 'Express' ? t('c_exp') : t('c_reg')) })}</span><b>${rp(o.shipping)}</b></div>
+      ${o.discount > 0 ? `<div class="kv"><span>${t('sum_discount')}</span><b style="color:var(--ok)">-${rp(o.discount)}</b></div>` : ''}
+      <div class="kv"><span>${o.paymentMethod === 'cod' ? t('ok_total') : t('ok_to_pay')}</span><b style="font-size:1.15rem">${rp(o.total)}</b></div>
+    </div>
+    <div class="card" style="margin-top:20px">${payBlock}</div>
+    ${proof}
+    <div class="actions">
+      <a class="btn-solid wa" target="_blank" rel="noopener" href="https://wa.me/${CONFIG.ADMIN_WHATSAPP}?text=${encodeURIComponent(wa)}">${t('ok_wa')}</a>
+      <a class="btn-ghost" href="shop.html">${t('ok_continue')}</a>
+      <a class="btn-ghost" href="dashboard.html">${t('ok_account')}</a>
+    </div></div>`;
+}
+
+/* ---------- Upload bukti ---------- */
+function compressImage(file, maxSide = 1400, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        const k = Math.min(1, maxSide / Math.max(w, h)); w = Math.round(w * k); h = Math.round(h * k);
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(cv.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+let proofData = null;
+async function onProofChosen(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  if (!/^image\//.test(f.type)) { toast(t('t_proof_type'), 'warn'); return; }
+  if (f.size > 8 * 1024 * 1024) { toast(t('t_proof_big'), 'warn'); return; }
+  try {
+    proofData = await compressImage(f);
+    const pv = $('#proofPreview'); pv.src = proofData; pv.hidden = false;
+    $('#proofSend').disabled = false;
+  } catch (e) { toast(t('t_proof_type'), 'warn'); }
+}
+async function sendProof() {
+  if (!proofData || !S.lastOrder) return;
+  const btn = $('#proofSend'); btn.disabled = true;
+  try {
+    const res = await api({ action: 'uploadProof', orderId: S.lastOrder.order.orderId, email: S.lastOrder.customer.email, mime: 'image/jpeg', data: proofData.split(',')[1] });
+    if (res && res.success) {
+      S.lastOrder.proofSent = true; S.lastOrder.order.status = res.status || S.lastOrder.order.status;
+      sessionStorage.setItem('klikva_last_order', JSON.stringify(S.lastOrder));
+      renderSuccess(); toast(t('t_proof_ok'), 'ok');
+    } else { toast((res && res.message) || t('t_fail'), 'bad'); btn.disabled = false; }
+  } catch (e) { toast(t('t_net'), 'bad'); btn.disabled = false; }
+}
+
+/* =====================================================================
+   TAMPILAN, EVENT, INIT
+===================================================================== */
+function showView(name) {
+  ['Auth', 'Empty', 'Checkout', 'Success'].forEach(n => { $('#view' + n).hidden = n.toLowerCase() !== name; });
+  if (name === 'success') { renderSuccess(); const h = $('#okTitle'); if (h) h.focus({ preventScroll: true }); }
+}
+
+async function copyText(txt) {
+  try { await navigator.clipboard.writeText(txt); toast(t('t_copied'), 'ok'); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast(t('t_copied'), 'ok'); } catch (_) {}
+    ta.remove();
   }
 }
 
-/* =================================================================
-   CART
-================================================================= */
-function getCart() {
-  return JSON.parse(localStorage.getItem('klikva_cart') || '[]');
-}
-function saveCart(cart) {
-  localStorage.setItem('klikva_cart', JSON.stringify(cart));
-  updateCartCount();
-  renderCart();
-}
-function updateCartCount() {
-  const total = getCart().reduce((s, i) => s + i.quantity, 0);
-  const el = document.getElementById('cartCount');
-  if (el) el.textContent = total;
+function setLang(l) {
+  S.lang = l === 'en' ? 'en' : 'id';
+  localStorage.setItem('klikva_lang', S.lang);
+  applyStaticI18n();
+  ['fName', 'fEmail', 'fPhone', 'fAddress', 'fDistrict', 'fCity', 'fPostal'].forEach(id => setErr(id, null));
+  if (!$('#viewCheckout').hidden) renderAll();
+  if (!$('#viewSuccess').hidden && S.lastOrder) renderSuccess();
 }
 
-function findProduct(id) {
-  return products.find(p => p.id === id);
-}
+function bindEvents() {
+  $$('.lang-btn').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
 
-function checkStock(product, requestedQty) {
-  if (!product) return { status: 'removed', stock: null, message: t('product_deleted') };
-  if (product.stock === null || product.stock === undefined) return { status: 'ok', stock: null, message: t('stock_available') };
-  if (product.stock === 0) return { status: 'out', stock: 0, message: t('stock_out') };
-  if (requestedQty > product.stock) return { status: 'out', stock: product.stock, message: `${t('stock_not_enough')} ${product.stock})` };
-  if (product.stock <= 3) return { status: 'low', stock: product.stock, message: `${t('stock_almost')} ${product.stock}` };
-  return { status: 'ok', stock: product.stock, message: t('stock_available') };
-}
-
-function validateCartStock() {
-  const cart = getCart();
-  const issues = { out: [], low: [], removed: [] };
-  cart.forEach(item => {
-    const product = findProduct(item.id);
-    if (!product) { issues.removed.push({ id: item.id, qty: item.quantity }); return; }
-    const result = checkStock(product, item.quantity);
-    if (result.status === 'out') issues.out.push({ product, qty: item.quantity, stock: result.stock });
-    else if (result.status === 'low') issues.low.push({ product, qty: item.quantity, stock: result.stock });
+  if (localStorage.getItem('klikva_theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  $('#themeBtn').addEventListener('click', () => {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (dark) document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('klikva_theme', dark ? 'light' : 'dark');
   });
-  return issues;
-}
 
-function updateQuantity(productId, change) {
-  const cart = getCart();
-  const item = cart.find(i => i.id === productId);
-  if (!item) return;
-  const product = findProduct(productId);
-  const newQty = item.quantity + change;
-  if (change > 0 && product && product.stock !== null && product.stock !== undefined) {
-    if (newQty > product.stock) {
-      showToast(t('toast_stock_limit', { name: product.name.substring(0, 25), stock: product.stock }), 'warning');
+  $('#courierList').addEventListener('change', e => {
+    if (e.target.name !== 'courier') return;
+    S.courier = e.target.value;
+    $$('#courierList .opt').forEach(l => l.classList.toggle('selected', l.querySelector('input').checked));
+    renderAll();
+  });
+  $$('input[name="ctype"]').forEach(r => r.addEventListener('change', () => { S.ctype = r.value; renderAll(); }));
+  $('#payList').addEventListener('change', e => {
+    if (e.target.name !== 'payment') return;
+    S.payment = e.target.value;
+    $$('#payList .opt').forEach(l => l.classList.toggle('selected', l.querySelector('input').checked));
+    renderPayPanel();
+  });
+
+  $('#orderForm').addEventListener('input', e => { if (e.target.getAttribute('aria-invalid')) setErr(e.target.id, null); });
+  $('#orderForm').addEventListener('submit', e => { e.preventDefault(); placeOrder(); });
+  $('#placeBtn').addEventListener('click', placeOrder);
+  $('#mbBtn').addEventListener('click', placeOrder);
+  $('#promoBtn').addEventListener('click', applyPromo);
+  $('#promoInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); applyPromo(); } });
+
+  document.addEventListener('click', e => {
+    const cp = e.target.closest('[data-copy]'); if (cp) { copyText(cp.dataset.copy); return; }
+    const rm = e.target.closest('[data-rm]');
+    if (rm) {
+      S.cart = S.cart.filter(i => String(i.id) !== rm.dataset.rm); saveCart();
+      if (!S.cart.length) showView('empty'); else renderAll();
       return;
     }
-  }
-  item.quantity = newQty;
-  if (item.quantity <= 0) cart.splice(cart.indexOf(item), 1);
-  saveCart(cart);
-}
-
-function removeItem(productId) {
-  saveCart(getCart().filter(i => i.id !== productId));
-}
-
-/* =================================================================
-   TOAST
-================================================================= */
-function showToast(msg, type = 'info') {
-  const existing = document.getElementById('klikva-toast');
-  if (existing) existing.remove();
-  const colors = {
-    warning: { bg: 'rgba(217,119,6,.12)', border: 'rgba(217,119,6,.3)', color: '#D97706' },
-    error:   { bg: 'rgba(220,38,38,.12)', border: 'rgba(220,38,38,.3)', color: '#DC2626' },
-    success: { bg: 'rgba(5,150,105,.12)', border: 'rgba(5,150,105,.3)', color: '#059669' },
-    info:    { bg: 'rgba(107,114,128,.12)', border: 'rgba(107,114,128,.3)', color: 'var(--text)' }
-  };
-  const c = colors[type] || colors.info;
-  const toast = document.createElement('div');
-  toast.id = 'klikva-toast';
-  toast.style.cssText = `position:fixed;bottom:2rem;right:2rem;z-index:9999;background:${c.bg};border:1px solid ${c.border};color:${c.color};padding:.875rem 1.25rem;border-radius:.875rem;font-size:.875rem;font-weight:600;font-family:var(--font);box-shadow:0 8px 24px rgba(0,0,0,.15);animation:slideUp .3s ease;max-width:340px;line-height:1.4;backdrop-filter:blur(10px)`;
-  toast.textContent = msg;
-  document.body.appendChild(toast);
-  if (!document.getElementById('klikva-toast-style')) {
-    const s = document.createElement('style');
-    s.id = 'klikva-toast-style';
-    s.textContent = '@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}';
-    document.head.appendChild(s);
-  }
-  setTimeout(() => toast.remove(), 3500);
-}
-
-/* =================================================================
-   RENDER CART
-================================================================= */
-function renderCart() {
-  const container = document.getElementById('cartContainer');
-  const cart = getCart();
-
-  if (!productsLoaded && cart.length > 0) {
-    container.innerHTML = `<div class="loading-state"><div class="loading-spinner"></div><p style="margin-top:12px">${t('loading')}</p></div>`;
-    return;
-  }
-
-  if (cart.length === 0) {
-    container.innerHTML = `
-      <div class="empty-cart">
-        <div class="icon">🛒</div>
-        <h3>${t('empty_title')}</h3>
-        <p>${t('empty_desc')}</p>
-        <a href="shop.html" class="shop-now-btn">${t('empty_btn')}</a>
-      </div>
-    `;
-    return;
-  }
-
-  // Hitung subtotal
-  let subtotal = 0;
-  cart.forEach(item => {
-    const product = findProduct(item.id);
-    if (product) subtotal += product.price * item.quantity;
+    const act = e.target.closest('[data-act]'); if (!act) return;
+    if (act.dataset.act === 'retry') { S.loading = true; loadProducts(); }
+    if (act.dataset.act === 'promo-remove') { S.promo = null; $('#promoMsg').className = 'promo-msg'; $('#promoMsg').textContent = ''; renderTotals(); }
+    if (act.dataset.act === 'proof-send') sendProof();
   });
-  const shipping = subtotal > 500000 ? 0 : 30000;
-  const total = subtotal + shipping;
-
-  const issues = validateCartStock();
-  const hasOut = issues.out.length > 0 || issues.removed.length > 0;
-  const hasLow = issues.low.length > 0;
-
-  const outBanner = hasOut ? `
-    <div class="stock-alert-banner">
-      <span class="alert-icon">🚫</span>
-      <div>
-        <strong>${t('stock_out_banner_title')}</strong>
-        ${issues.out.map(i => `<span>• ${i.product.name.substring(0, 35)}${i.product.name.length > 35 ? '...' : ''} — ${i.stock === 0 ? t('stock_out') : `${t('stock_not_enough')} ${i.stock})`}</span><br>`).join('')}
-        ${issues.removed.map(i => `<span>• ${t('product_deleted')} (ID: ${i.id})</span><br>`).join('')}
-        ${t('stock_out_banner_desc')}
-      </div>
-    </div>
-  ` : '';
-
-  const lowBanner = hasLow ? `
-    <div class="stock-low-banner">
-      <span class="alert-icon">⚠️</span>
-      <div>
-        <strong>${t('stock_low_banner_title')}</strong>
-        ${issues.low.map(i => `<span>• ${i.product.name.substring(0, 35)}${i.product.name.length > 35 ? '...' : ''} — ${t('stock_low_banner_desc')} ${i.stock}</span><br>`).join('')}
-      </div>
-    </div>
-  ` : '';
-
-  const totalQty = cart.reduce((s, i) => s + i.quantity, 0);
-
-  container.innerHTML = `
-    <div class="cart-header">
-      <h1>${t('cart_title')}</h1>
-      <p>${totalQty} ${t('cart_items')}</p>
-    </div>
-
-    <div class="cart-grid">
-      <div class="cart-items">
-        ${cart.map(item => {
-          const product = findProduct(item.id);
-          const isRemoved = !product;
-
-          if (isRemoved) {
-            return `
-              <div class="cart-item removed-product">
-                <div class="cart-item-image">
-                  <span style="font-size:2rem;opacity:.5">📦</span>
-                  <span class="stock-badge removed">${t('product_unavailable')}</span>
-                </div>
-                <div class="cart-item-info">
-                  <h3>${t('product_unavailable')}</h3>
-                  <div class="cart-item-category">ID: ${item.id}</div>
-                  <div class="stock-warning-text removed">${t('product_deleted')}</div>
-                </div>
-                <div class="cart-item-actions">
-                  <button class="remove-btn" onclick="removeItem(${item.id})">🗑️ ${t('remove')}</button>
-                </div>
-              </div>
-            `;
-          }
-
-          const stockResult = checkStock(product, item.quantity);
-          const isOut = stockResult.status === 'out';
-          const isLow = stockResult.status === 'low';
-
-          const badgeHtml = isOut
-            ? `<span class="stock-badge">${t('stock_out')}</span>`
-            : isLow
-              ? `<span class="stock-badge low">${t('stock_left')} ${product.stock}</span>`
-              : '';
-
-          const stockTextHtml = isOut
-            ? `<div class="stock-warning-text out">🚫 ${stockResult.message}</div>`
-            : isLow
-              ? `<div class="stock-warning-text low">⚠️ ${stockResult.message}</div>`
-              : `<div class="stock-warning-text ok">${stockResult.message}</div>`;
-
-          const plusDisabled = isOut || (product.stock !== null && product.stock !== undefined && item.quantity >= product.stock) ? 'disabled' : '';
-
-          // Support gambar foto (data:) atau emoji
-          const imgHtml = product.image && product.image.startsWith('data:')
-            ? `<img src="${product.image}" alt="${product.name}" draggable="false">`
-            : `<span style="font-size:2.5rem">${product.image || '📦'}</span>`;
-
-          return `
-            <div class="cart-item${isOut ? ' out-of-stock' : ''}">
-              <div class="cart-item-image">
-                ${imgHtml}
-                ${badgeHtml}
-              </div>
-              <div class="cart-item-info">
-                <h3>${product.name.length > 40 ? product.name.substring(0, 40) + '...' : product.name}</h3>
-                <div class="cart-item-category">${product.category}</div>
-                <div class="cart-item-price">Rp ${product.price.toLocaleString('id-ID')}</div>
-                ${stockTextHtml}
-              </div>
-              <div class="cart-item-actions">
-                <button class="quantity-btn" onclick="updateQuantity(${product.id}, -1)">−</button>
-                <span class="item-quantity">${item.quantity}</span>
-                <button class="quantity-btn" onclick="updateQuantity(${product.id}, 1)" ${plusDisabled}>+</button>
-                <button class="remove-btn" onclick="removeItem(${product.id})">🗑️ ${t('remove')}</button>
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-
-      <div class="cart-summary">
-        <h3>${t('order_summary')}</h3>
-        ${outBanner}
-        ${lowBanner}
-        <div class="summary-row">
-          <span>${t('subtotal')}</span>
-          <span>Rp ${subtotal.toLocaleString('id-ID')}</span>
-        </div>
-        <div class="summary-row">
-          <span>${t('shipping')}</span>
-          <span>${shipping === 0 ? t('free') : 'Rp ' + shipping.toLocaleString('id-ID')}</span>
-        </div>
-        <div class="summary-row total">
-          <span>${t('total')}</span>
-          <span>Rp ${total.toLocaleString('id-ID')}</span>
-        </div>
-        <button class="checkout-btn" onclick="proceedToCheckout()" ${hasOut ? 'disabled' : ''}>
-          ${hasOut ? t('checkout_blocked') : t('checkout')}
-        </button>
-        <div class="checkout-hint">${hasOut ? t('checkout_hint_blocked') : ''}</div>
-        <a href="shop.html" class="continue-shop">${t('continue_shopping')}</a>
-      </div>
-    </div>
-  `;
+  document.addEventListener('change', e => { if (e.target.id === 'proofFile') onProofChosen(e.target); });
 }
 
-/* =================================================================
-   CHECKOUT
-================================================================= */
-function proceedToCheckout() {
-  const user = localStorage.getItem('klikva_user');
-  if (!user) {
-    showToast(t('toast_need_login'), 'warning');
-    localStorage.setItem('klikva_pending_buy', 'checkout');
-    setTimeout(() => { window.location.href = 'registerd.html'; }, 1200);
+function init() {
+  bindEvents();
+  applyStaticI18n();
+
+  const user = readJSON('klikva_user', null);
+  if (!user || !user.email) { showView('auth'); return; }
+  $('#avatar').textContent = (user.namaLengkap || 'M').trim().charAt(0).toUpperCase();
+
+  S.cart = (readJSON('klikva_cart', []) || []).map(i => ({ id: i.id, quantity: parseInt(i.quantity, 10) || 0 })).filter(i => i.quantity > 0);
+  const last = readJSON('klikva_last_order', null) || (() => { try { return JSON.parse(sessionStorage.getItem('klikva_last_order')); } catch (e) { return null; } })();
+
+  if (!S.cart.length) {
+    if (last && last.order) { S.lastOrder = last; showView('success'); } else showView('empty');
     return;
   }
-  const issues = validateCartStock();
-  if (issues.out.length > 0 || issues.removed.length > 0) {
-    showToast(t('toast_checkout_blocked'), 'error');
-    return;
-  }
-  localStorage.setItem('klikva_checkout_time', Date.now().toString());
-  window.location.href = 'checkout.html';
+  S.requestId = newId();
+  showView('checkout');
+  prefill();
+  loadProducts();
 }
-
-/* =================================================================
-   NAVBAR AVATAR
-================================================================= */
-function renderNavbarAvatar() {
-  const container = document.getElementById('navAvatarContainer');
-  const loginBtn = document.getElementById('loginBtn');
-  const userRaw = localStorage.getItem('klikva_user');
-  if (!container) return;
-
-  if (userRaw) {
-    try {
-      const u = JSON.parse(userRaw);
-      const initial = (u.namaLengkap || 'M').charAt(0).toUpperCase();
-      const name = u.namaLengkap?.split(' ')[0] || 'Member';
-      const avatarUrl = u.avatarUrl || localStorage.getItem('klikva_avatar') || '';
-      const avatarContent = avatarUrl
-        ? `<img src="${avatarUrl}" alt="Avatar" onerror="this.parentElement.textContent='${initial}'">`
-        : initial;
-      container.innerHTML = `<div class="avatar-nav" onclick="window.location.href='dashboard.html'" title="${name}"><div class="avatar-nav-image">${avatarContent}</div><span class="avatar-nav-name">${name}</span></div>`;
-      if (loginBtn) loginBtn.style.display = 'none';
-    } catch(e) {
-      container.innerHTML = '';
-      if (loginBtn) loginBtn.style.display = '';
-    }
-  } else {
-    container.innerHTML = '';
-    if (loginBtn) loginBtn.style.display = '';
-  }
-}
-
-/* =================================================================
-   INIT
-================================================================= */
-(async function init() {
-  applyLang();
-  renderNavbarAvatar();
-  updateCartCount();
-  await loadProducts();
-  renderCart();
-})();
+init();
 </script>
 </body>
 </html>
